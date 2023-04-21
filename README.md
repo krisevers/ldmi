@@ -1,4 +1,7 @@
-# Laminar Dynamic Model Inference (ldmi)
+# Laminar Dynamic Model Inference
+Fast training and inference of dynamic model parameters using simulation based inference approaches.
+
+
 ## Installation
 ### Linux
 ```
