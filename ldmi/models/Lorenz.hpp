@@ -3,13 +3,15 @@
 #include <assert.h>
 #include <iostream>
 
+#include "utils.hpp"
+
 using std::string;
 using std::vector;
 
 typedef std::vector<double> dim1;
 typedef std::vector<dim1>   dim2;
 
-class LO
+class Sim
 {
 	private:
 		double dt;
@@ -19,24 +21,26 @@ class LO
 
 		size_t dimension;
 		size_t num_steps;
-		double t_final;
-		double t_initial;
+		double t_sim;
+
+		bool progress;
 
 		dim1 times;
 		dim2 states;
 		dim1 initial_state;
 
 	public:
-		LO(double dt,		// time step
+		Sim(double dt,		// time step
 		   double rho,
 		   double sigma,
 		   double beta,
 		   double t_sim,   	// simulation time
-		   dim1   y		// state vector
+		   dim1   y,			// state vector
+		   bool progress = true  // show progress bar
 		   ) : dt(dt), PAR_rho(rho), PAR_sigma(sigma), PAR_beta(beta)
 		{
 			assert(t_sim >= 0);
-			this->t_final = t_final;
+			this->t_sim = t_sim;
 			initial_state = y;
 
 			dimension = y.size();
@@ -46,6 +50,12 @@ class LO
 			for (size_t i = 0; i < num_steps; ++i)
 				states[i].resize(dimension);
 			times.resize(num_steps);
+
+			if (progress == true)
+				std::cout << "Integrating " << t_sim << " seconds of "
+				          << dimension << "-dimensional Lorenz system "
+				          << "with dt = " << dt << " seconds." << std::endl;
+			this->progress = progress;
 		}
 
 		void derivative(dim1 &y, dim1 &dydt, double t)
@@ -77,6 +87,8 @@ class LO
 				times[i] = t;
 				euler(y, t);
 				t += dt;
+				if (progress == true)
+					progress_bar(i, num_steps);
 			}
 		}
 
@@ -93,7 +105,7 @@ class LO
 			size_t n = dimension;
 
 			states[0] = initial_state;
-			times[0] = t_initial;
+			times[0] = 0;
 			dim1 y = initial_state;
 
 			for (int step = 1; step < num_steps; ++step)
@@ -101,7 +113,9 @@ class LO
 				double t = step * dt;
 				rk4(y, t);
 				states[step] = y;
-				times[step] = t_initial + t;
+				times[step] = 0 + t;
+				if (progress == true)
+					progress_bar(step, num_steps);
 			}
 		}
 

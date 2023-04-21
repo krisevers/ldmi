@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "cmath": "c",
+        "cstdio": "c",
+        "cstdlib": "c",
+        "limits": "c",
+        "*.tcc": "c",
+        "cstdint": "c",
+        "type_traits": "c",
+        "typeinfo": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
+}
