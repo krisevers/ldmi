@@ -1,5 +1,4 @@
 # Laminar Dynamic Model Inference (ldmi)
----
 ## Installation
 ### Linux
 ```
