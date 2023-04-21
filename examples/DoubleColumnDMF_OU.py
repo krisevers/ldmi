@@ -6,7 +6,7 @@ import os
 import sys
 sys.path.insert(0, os.getcwd())
 
-from ldmi.models.DMF import Sim
+from ldmi.models.DMF_OU import Sim
 
 # DMF parameters and initial conditions
 sigma   = 0.02
@@ -60,7 +60,8 @@ nu_ext = np.zeros(M)
 W_ext  = np.zeros(M, dtype=float)
 
 
-layer = 'L6'
+layer = None
+idx = 0
 if layer == 'L23':
     idx = 0
 elif layer == 'L4':
@@ -82,7 +83,7 @@ kappa = np.tile([1.5, 0., 0., 0., 0., 0., 0., 0.], 2)
 
 y0 = np.zeros((M, 4), dtype=float)
 
-t_sim = 30
+t_sim = 10
 dt = 1e-4
 
 L = Sim(dt=dt, 
