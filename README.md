@@ -1,8 +1,6 @@
-# ldmi
-Laminar Dynamic Model Inference
+# Laminar Dynamic Model Inference (ldmi)
 ---
-# Installation
----
+## Installation
 ### Linux
 ```
 # create environment
