@@ -10,41 +10,6 @@ typedef std::vector<double> dim1;
 typedef std::vector<dim1>   dim2;
 typedef std::vector<dim2>   dim3;
 
-dim1 dot_2D1D(dim2 &A, dim1 &v)
-{
-    /*
-    dot product of a 2D vector and a 1D vector, returns a 1D vector
-    */
-    assert(A.size() == v.size());
-    assert(A[0].size() == v.size());
-    dim1 result;
-    result.resize(A.size());
-    for (size_t i = 0; i < A.size(); ++i)
-    {
-        result[i] = 0;
-        for (size_t j = 0; j < A[0].size(); ++j)
-        {
-            result[i] += A[i][j] * v[j];
-        }
-    }
-
-    return result;
-}
-
-double dot_1D0D(dim1 &a, double &d)
-{
-    /*
-    dot product of a 1D vector and a double, returns a double
-    */
-    double result = 0;
-    for (size_t i = 0; i < a.size(); ++i)
-    {
-        result += a[i] * d;
-    }
-
-    return result;
-}
-
 void progress_bar(double progress, double total)
 {
     /*
@@ -103,4 +68,19 @@ std::vector<double> linspace(T start_in, T end_in, int num_in)
   linspaced.push_back(end); // I want to ensure that start and end
                             // are exactly the same as the input
   return linspaced;
+}
+
+template<typename T>
+std::vector<double> logspace(double start, double end, int num)
+{
+    /*
+    logspace
+    */
+    std::vector<double> result;
+    double delta = (end - start) / (num - 1);
+    for (int i = 0; i < num; ++i)
+    {
+        result.push_back(pow(10, start + delta * i));
+    }
+    return result;
 }
