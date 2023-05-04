@@ -8,7 +8,7 @@ sys.path.insert(0, os.getcwd())
 
 from ldmi.models.Lorenz import Sim
 
-# Lorenz paramters and initial conditions
+# Lorenz parameters and initial conditions
 sigma, beta, rho = 10, 2.667, 28
 y0 = [0, 1, 1.05]
 
