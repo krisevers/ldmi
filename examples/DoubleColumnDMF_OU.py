@@ -83,7 +83,7 @@ kappa = np.tile([1.5, 0., 0., 0., 0., 0., 0., 0.], 2)
 
 y0 = np.zeros((M, 4), dtype=float)
 
-t_sim = 10
+t_sim = 50
 dt = 1e-4
 
 L = Sim(dt=dt, 

@@ -77,7 +77,6 @@ nu_ext[idx+8]   = nu
 W_ext[idx]      = K_ext * J_E
 W_ext[idx+8]    = K_ext * J_E
 
-
 kappa = np.tile([1.5, 0., 0., 0., 0., 0., 0., 0.], 2)
 
 y0 = np.zeros((M, 4), dtype=float)
