@@ -1,0 +1,195 @@
+{
+    "parameters": [
+        {
+            "name": "E0v",
+            "bounds": {
+                "lower": 0.25,
+                "upper": 0.5
+            },
+            "distribution": "uniform"
+        },
+        {
+            "name": "alpha_v",
+            "bounds": {
+                "lower": 0.0,
+                "upper": 0.6
+            },
+            "distribution": "uniform"
+        },
+        {
+            "name": "alpha_d",
+            "bounds": {
+                "lower": 0.0,
+                "upper": 0.6
+            },
+            "distribution": "uniform"
+        },
+        {
+            "name": "alpha_p",
+            "bounds": {
+                "lower": 0.0,
+                "upper": 0.6
+            },
+            "distribution": "uniform"
+        },
+        {
+            "name": "Hct_v",
+            "bounds": {  
+                "lower": 0.32,
+                "upper": 0.38
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "Hct_d",
+          "bounds": {
+            "lower": 0.35,
+            "upper": 0.41
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "Hct_p",
+          "bounds": {
+            "lower": 0.38,
+            "upper": 0.44
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "rho_v",
+          "bounds": {
+            "lower": 0.7436,
+            "upper": 0.7816
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "rho_d",
+          "bounds": {
+            "lower": 0.754,
+            "upper": 0.792
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "rho_p",
+          "bounds": {
+            "lower": 0.7648,
+            "upper": 0.8028
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "R2s_t",
+          "bounds": {
+            "lower": 30,
+            "upper": 45
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "R2s_v",
+          "bounds": {
+            "lower": 60,
+            "upper": 250
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "R2s_d",
+          "bounds": {
+            "lower": 60,
+            "upper": 250
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "R2s_p",
+          "bounds": {
+            "lower": 60,
+            "upper": 250
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "tau_v_in",
+          "bounds": {
+            "lower": 0,
+            "upper": 100
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "tau_v_de",
+          "bounds": {
+            "lower": 0,
+            "upper": 100
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "tau_d_in",
+          "bounds": {
+            "lower": 0,
+            "upper": 100
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "tau_d_de",
+          "bounds": {
+            "lower": 0,
+            "upper": 100
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "tau_p_in",
+          "bounds": {
+            "lower": 0,
+            "upper": 100
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "tau_p_de",
+          "bounds": {
+            "lower": 0,
+            "upper": 100
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "t0v",
+          "bounds": {
+            "lower": 0.5,
+            "upper": 2
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "V0t",
+          "bounds": {
+            "lower": 1,
+            "upper": 5
+          },
+          "distribution": "uniform"
+        },
+        {
+          "name": "V0t",
+          "bounds": {
+            "lower": 1,
+            "upper": 10
+          },
+          "distribution": "uniform"
+        },
+        { "name": "w_v",
+          "bounds": {
+            "lower": 0.25,
+            "upper": 0.75
+          },
+          "distribution": "uniform"
+        }
+    ]
+}
