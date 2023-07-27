@@ -42,7 +42,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # install python packages
 # RUN pip install sbi \
 RUN pip install numpy \
-    # && pip install scipy \
+    && pip install scipy \
     && pip install matplotlib \
     && pip install tqdm \
     && pip install mpi4py

@@ -65,7 +65,6 @@ if __name__=="__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--path', required=True, help='Set path to obtain data')
-    parser.add_argument('-m', '--models', nargs='+', default='DMF', help='Set models to explore parameters')
 
     args = parser.parse_args()
 
@@ -75,9 +74,9 @@ if __name__=="__main__":
     print("##################################################################")
     print("Loading data...")
 
-    theta_keys = ['U_1', 'U_2', 'U_3', 'dur', 
-                  'c1', 'c2', 'c3', 
-                  'w_v', 'V0_p', 't0v', 'tau_v_in', 'tau_v_de', 'tau_d_in', 'tau_d_de', 'tau_p_in', 'tau_p_de', 'Hct_v', 'Hct_d', 'Hct_p', 'R2s_t', 'R2s_v', 'R2s_d', 'R2s_p']
+    theta_keys = ['P_L23E>L23E', 'P_L4E>L23E', 'P_L4E>L23I', 'P_L4I>L23E', 'P_L4I>L23I', 'P_L23E>L4E', 'P_L23E>L4I', 'P_L23I>L4E', 'P_L23I>L4I', 'P_L23E>L5E', 'P_L23E>L5I', 'P_L5I>L23E', 'P_L5I>L23I', 'P_L6E>L4E', 'P_L6E>L4I', 
+                  'U_L23E', 'U_L23I', 'U_L4E', 'U_L4I', 'U_L5E', 'U_L5I', 'U_L6E', 'U_L6I' 
+                 ]
 
     data_keys = ['peak_Posi', 'peak_Ampl', 'peak_Area', 'unde_Posi', 'unde_Ampl', 'unde_Area', 'up_Slope', 'down_Slope']
 
@@ -122,8 +121,6 @@ if __name__=="__main__":
     theta = torch.from_numpy(theta).float()
     X = torch.from_numpy(X).float()
 
-    IPython.embed()
-
     # train
     print('\n')
     print("##################################################################")
@@ -141,6 +138,7 @@ if __name__=="__main__":
     print("##################################################################")
     print("Inferring posterior...")
     obs_x = X.mean(axis=0)
+    obs_x = X[0]
     num_samples = 10000
 
     posterior.set_default_x(obs_x)
@@ -155,12 +153,12 @@ if __name__=="__main__":
                        labels=theta_keys,
                        figsize=(20, 20)
     )
-    plt.savefig(PATH + '/pairplot.png', dpi=300)
+    plt.savefig(PATH + '/png/pairplot.png', dpi=300)
 
     # conditional pairplot
     mean_limit = theta.mean(axis=0).tolist()
     std_limit = theta.std(axis=0).tolist()
-    limits = [(mean_limit[m] - 2*std_limit[m], mean_limit[m] + 2*std_limit[m]) for m in range(len(theta_keys))]
+    limits = [(mean_limit[i] - 2*std_limit[i], mean_limit[i] + 2*std_limit[i]) for i in range(len(theta_keys))]
 
     condition = posterior.sample((1,))
     fig, ax = conditional_pairplot(
@@ -170,7 +168,7 @@ if __name__=="__main__":
         labels=theta_keys,
         figsize=(20, 20),
     )
-    plt.savefig(PATH + '/conditional_pairplot.png', dpi=300)
+    plt.savefig(PATH + '/png/conditional_pairplot.png', dpi=300)
 
     # marginal correlation matrix
     corr_matrix_marginal = np.corrcoef(posterior_samples.T)
@@ -181,7 +179,7 @@ if __name__=="__main__":
     plt.xticks(np.arange(len(theta_keys)), theta_keys, rotation=45)
     plt.yticks(np.arange(len(theta_keys)), theta_keys)
     plt.tight_layout()
-    plt.savefig(PATH + '/marginal_correlation_matrix.png', dpi=300)
+    plt.savefig(PATH + '/png/marginal_correlation_matrix.png', dpi=300)
 
 
 

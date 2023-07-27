@@ -7,8 +7,6 @@ def DMF_sim(U, P):
 
     # Neuronal parameters:
     # --------------------------------------------------------------------------
-    C = P['C']  # external connection
-
     # Initial condtions:
     I = np.zeros(M)
     H = np.zeros(M)
@@ -17,11 +15,20 @@ def DMF_sim(U, P):
     dt = P['dt']
     neuro = np.zeros((int(P['T'] / dt), M))
 
+    def f(h, a, b, d):
+        # gain function
+        h = np.float128(h)
+        return (a * h - b) / (1 - np.exp(-d * (a * h - b)))
+
     for t in range(int(P['T'] / dt)):
 
-        I += dt * (-I / P['tau_s'] + np.dot(P['W'], F) + U[t, :])
+        I += dt * (-I / P['tau_s'])
+        I += dt * np.dot(P['W'], F)
+        I += dt * (P['W_bg'] * P['nu_bg'])
+        I += dt * U[t, :]
+        I += np.sqrt(dt/P['tau_s']) * P['sigma'] * np.random.randn(M)
         H += dt * ((-H + P['R']*I) / P['tau_m'])
-        F = P['f'](H, a=P['a'], b=P['b'], c=P['c'], d=P['d'])
+        F = f(H, a=P['a'], b=P['b'], d=P['d'])
 
         neuro[t, :] = I.T   # save synaptic input for computing BOLD signal
 
@@ -30,7 +37,7 @@ def DMF_sim(U, P):
 def DMF_parameters(P):
     P['dt'] = 1e-4
 
-    P['sigma'] = 0.02
+    P['sigma'] = 0.0
     P['tau_s'] = 0.5e-3
     P['tau_m'] = 10e-3
     P['C_m']   = 250e-6
@@ -49,7 +56,7 @@ def DMF_parameters(P):
     P['W'] = np.tile([P['J_E'], P['J_I']], (M, int(M/2)))
 
     P['P'] = np.array(
-				     [[0.1009, 0.1689, 0.0437, 0.0818, 0.0323, 0.0000, 0.0076, 0.0000],
+				     [[0.1009, 0.1689, 0.0874, 0.0818, 0.0323, 0.0000, 0.0076, 0.0000],
 				      [0.1346, 0.1371, 0.0316, 0.0515, 0.0755, 0.0000, 0.0042, 0.0000],
 				      [0.0077, 0.0059, 0.0497, 0.1350, 0.0067, 0.0003, 0.0453, 0.0000],
 				      [0.0691, 0.0029, 0.0794, 0.1597, 0.0033, 0.0000, 0.1057, 0.0000],
@@ -58,6 +65,12 @@ def DMF_parameters(P):
 				      [0.0156, 0.0066, 0.0211, 0.0166, 0.0572, 0.0197, 0.0396, 0.2252],
 				      [0.0364, 0.0010, 0.0034, 0.0005, 0.0277, 0.0080, 0.0658, 0.1443]])
     P['N'] = np.array([20683,  5834,   21915,  5479,   4850,   1065,   14395,  2948  ])
+
+    P['W_bg'] = P['K_bg'] * P['J_E']
+
+    P['a'] = 48
+    P['b'] = 981
+    P['d'] = 8.9e-3
 
     return P
 
