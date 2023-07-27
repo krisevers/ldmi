@@ -54,9 +54,9 @@ def worker(K=12, T=20, DMF=None, test=False):
     # external input
     U = {}
     onset = 3
-    dur = 20
+    dur = 2
     amp = 1
-    std = 1.5
+    std = 1.5e-3
     U['u'] = np.zeros((int(T / DMF_params['dt']), DMF_params['M']))           # Matrix with input vectors to the neuronal model (one column per depth)
     if 'U_L23E' in DMF_params.keys():
         U['u'] = gen_input(U['u'], 0, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=0, std=std)
@@ -92,8 +92,6 @@ def worker(K=12, T=20, DMF=None, test=False):
     syn_signal = DMF_model.DMF_sim(U['u'], DMF_params)    # [T, M]
 
     # syn_signal[:, [0, 2, 4, 6]] = syn_signal[:, [0, 2, 4, 6]] / syn_signal[:, [1, 3, 5, 7]] - syn_signal[onset - int(1/DMF_params['dt']), [0, 2, 4, 6]] / syn_signal[onset - int(1/DMF_params['dt']), [1, 3, 5, 7]]
-
-    syn_signal *= 1
     
     N2K, TH = get_N2K(K) # [K, M]
 
@@ -111,15 +109,20 @@ def worker(K=12, T=20, DMF=None, test=False):
     neuro = neuro * np.dot(N2K, DMF_params['N']) * .05   # voxel width = 0.3 mm
     neuro /= TH
 
+    neuro *= 5
+
     # smooth across layers
-    from scipy import ndimage
-    neuro = ndimage.gaussian_filter1d(neuro, K/(4*2), 1)
+    # from scipy import ndimage
+    # neuro = ndimage.gaussian_filter1d(neuro, K/(4*2), 1)
 
     new_T = T - 1
     NVC_params['T'] = new_T
     LBR_params['T'] = new_T
 
     cbf = NVC_model.NVC_sim(neuro, NVC_params)
+
+    from scipy import ndimage
+    cbf = ndimage.gaussian_filter1d(cbf, K/(4*2), 1)
 
     new_dt = 0.01
     old_dt = DMF_params['dt']
@@ -209,7 +212,7 @@ if __name__ == '__main__':
     num_simulations = 1
 
 
-    K = 50          # number of cortical depths
+    K = 99         # number of cortical depths
     T_sim = 60      # simulation time
 
     # set DMF parameters

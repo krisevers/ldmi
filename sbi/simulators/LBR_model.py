@@ -259,6 +259,9 @@ def LBR_sim(cbf, P, *args):
 	    # change in deoxyhemoglobin content venules:
         dHb_v        = (m - f_v*Xk[:,1]/Xk[:,0])/t0v
 
+        # if t == 200:
+        #     import IPython
+        #     IPython.embed()
 
 	    # ASCENDING VEIN COMPARTMENTS:
 	    #--------------------------------------------------------------------------    
@@ -351,6 +354,7 @@ def LBR_sim(cbf, P, *args):
 	    
         LBRpial[t,:] = H0p*((1-V0pq)*(k1p*V0pq*(1-q_p)) + k2p*V0pq*(1-q_p/v_p) +
 	                                    				  k3p*V0pq*(1-v_p))*100
+        
 
 
 	# save baseline physiological parameters
