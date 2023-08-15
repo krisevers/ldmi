@@ -54,7 +54,7 @@ def worker(K=12, T=20, DMF=None, test=False):
     # external input
     U = {}
     onset = 3
-    dur = 2
+    dur = 10
     amp = 1
     std = 1.5e-3
     U['u'] = np.zeros((int(T / DMF_params['dt']), DMF_params['M']))           # Matrix with input vectors to the neuronal model (one column per depth)
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     num_simulations = 1
 
 
-    K = 99         # number of cortical depths
+    K = 13         # number of cortical depths
     T_sim = 60      # simulation time
 
     # set DMF parameters
@@ -223,7 +223,7 @@ if __name__ == '__main__':
         DMF_params = {'K': K, 'dt': 1e-4, 'T': T_sim}
         DMF_params = DMF_model.DMF_parameters(DMF_params)    # get default parameters
         # select parameters to explore
-        # DMF_params['P_L23E>L23E'] = np.random.uniform(0, 2)
+        # DMF_params['P_L23E>L23E'] = = np.random.uniform(0, 2)
         # DMF_params['P_L4E>L23E']  = np.random.uniform(0, 2)
         # DMF_params['P_L4E>L23I']  = np.random.uniform(0, 2)
         # DMF_params['P_L4I>L23E']  = np.random.uniform(0, 2)
