@@ -54,26 +54,26 @@ def worker(K=12, T=20, DMF=None, test=False):
     # external input
     U = {}
     onset = 3
-    dur = 10
+    dur = 5
     amp = 1
     std = 1.5e-3
     U['u'] = np.zeros((int(T / DMF_params['dt']), DMF_params['M']))           # Matrix with input vectors to the neuronal model (one column per depth)
     if 'U_L23E' in DMF_params.keys():
-        U['u'] = gen_input(U['u'], 0, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=0, std=std)
+        U['u'] = gen_input(U['u'], 0, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=DMF_params['U_L23E'], std=std)
     if 'U_L23I' in DMF_params.keys():
-        U['u'] = gen_input(U['u'], 1, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=0, std=std)
+        U['u'] = gen_input(U['u'], 1, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=DMF_params['U_L23I'], std=std)
     if 'U_L4E' in DMF_params.keys():
-        U['u'] = gen_input(U['u'], 2, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=15, std=std)
+        U['u'] = gen_input(U['u'], 2, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=DMF_params['U_L4E'], std=std)
     if 'U_L4I' in DMF_params.keys():
-        U['u'] = gen_input(U['u'], 3, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=10, std=std)
+        U['u'] = gen_input(U['u'], 3, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=DMF_params['U_L4I'], std=std)
     if 'U_L5E' in DMF_params.keys():
-        U['u'] = gen_input(U['u'], 4, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=0, std=std)
+        U['u'] = gen_input(U['u'], 4, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=DMF_params['U_L5E'], std=std)
     if 'U_L5I' in DMF_params.keys():
-        U['u'] = gen_input(U['u'], 5, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=0, std=std)
+        U['u'] = gen_input(U['u'], 5, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=DMF_params['U_L5I'], std=std)
     if 'U_L6E' in DMF_params.keys():
-        U['u'] = gen_input(U['u'], 6, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=0, std=std)
+        U['u'] = gen_input(U['u'], 6, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=DMF_params['U_L6E'], std=std)
     if 'U_L6I' in DMF_params.keys():
-        U['u'] = gen_input(U['u'], 7, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=0, std=std)
+        U['u'] = gen_input(U['u'], 7, dt=DMF_params['dt'], start=onset, stop=onset+dur, amp=DMF_params['U_L6I'], std=std)
 
     # Buxton et al. (2004): The neural response is defined such that N(t) = 1 on the plateau of a sustained stimulus when no adaptation effects are operating. Similar to neuronal model defined in Havlicek et al. (2020).
 
@@ -97,7 +97,7 @@ def worker(K=12, T=20, DMF=None, test=False):
 
     neuro = np.zeros((syn_signal.shape[0], K))
     for t in range(np.shape(syn_signal)[0]):
-        neuro[t] = np.sum(N2K*abs(syn_signal[t]), axis=1)   # switch sign of inhibitory synaptic activity
+        neuro[t] = np.sum(N2K*np.maximum(np.zeros(DMF_params['M']), syn_signal[t]), axis=1)   # switch sign of inhibitory synaptic activity
 
     # deviation from baseline (at t = onset-1/dt)
     neuro = neuro - neuro[onset - int(1/DMF_params['dt'])]
@@ -106,10 +106,10 @@ def worker(K=12, T=20, DMF=None, test=False):
     neuro = neuro[int(1/DMF_params['dt']):]
 
     # multiply by N * surface area and divide by K
-    neuro = neuro * np.dot(N2K, DMF_params['N']) * .05   # voxel width = 0.3 mm
-    neuro /= TH
+    # neuro = neuro * np.dot(N2K, DMF_params['N']) * .05   # voxel width = 0.3 mm
+    # neuro /= TH
 
-    neuro *= 5
+    neuro *= 1
 
     # smooth across layers
     # from scipy import ndimage
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     num_simulations = 1
 
 
-    K = 13         # number of cortical depths
+    K = 15          # number of cortical depths
     T_sim = 60      # simulation time
 
     # set DMF parameters
@@ -223,7 +223,7 @@ if __name__ == '__main__':
         DMF_params = {'K': K, 'dt': 1e-4, 'T': T_sim}
         DMF_params = DMF_model.DMF_parameters(DMF_params)    # get default parameters
         # select parameters to explore
-        # DMF_params['P_L23E>L23E'] = = np.random.uniform(0, 2)
+        # DMF_params['P_L23E>L23E'] = np.random.uniform(0, 2)
         # DMF_params['P_L4E>L23E']  = np.random.uniform(0, 2)
         # DMF_params['P_L4E>L23I']  = np.random.uniform(0, 2)
         # DMF_params['P_L4I>L23E']  = np.random.uniform(0, 2)
@@ -309,19 +309,30 @@ if __name__ == '__main__':
                 plt.plot(X[tr]['lbr'][:, i], color=cm_lbr[i])
             plt.savefig('png/test/plot_neuro_cbf_lbr_ex{}.png'.format(tr))
 
+            layers = ['L23', 'L4', 'L5', 'L6']
+            layer_pos = [2, 7, 11, 14]
+            plt.text(0, 2, layers[0], color='black', fontsize=20)
+            plt.text(0, 7, layers[1], color='black', fontsize=20)
+            plt.text(0, 11, layers[2], color='black', fontsize=20)
+            plt.text(0, 14, layers[3], color='black', fontsize=20)
+
             plt.figure(figsize=(10, 10))
             plt.subplot(3, 1, 1)
             plt.imshow(X[tr]['neuro'].T, cmap='Spectral', aspect='auto', interpolation='none')
-            for i in range(1, len(TH_)):
-                plt.axhline(y=np.sum(TH_[:i]), color='black', lw=3)
+            plt.colorbar()
+            for i in range(4):
+                plt.text(1/1e-4, layer_pos[i], layers[i], color='black')
             plt.subplot(3, 1, 2)
             plt.imshow(X[tr]['cbf'].T, cmap='Spectral', aspect='auto', interpolation='none')
-            for i in range(1, len(TH_)):
-                plt.axhline(y=np.sum(TH_[:i]), color='black', lw=3)
+            plt.colorbar()
+            for i in range(4):
+                plt.text(1/1e-2, layer_pos[i], layers[i], color='black')
             plt.subplot(3, 1, 3)
             plt.imshow(X[tr]['lbr'].T, cmap='Spectral', aspect='auto', interpolation='none')
-            for i in range(1, len(TH_)):
-                plt.axhline(y=np.sum(TH_[:i]), color='black', lw=3)
+            plt.colorbar()
+            for i in range(4):
+                plt.text(1/1e-2, layer_pos[i], layers[i], color='black')
+            plt.tight_layout()
             plt.savefig('png/test/imshow_neuro_cbf_lbr_ex{}.png'.format(tr))
 
 

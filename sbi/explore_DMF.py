@@ -40,7 +40,7 @@ if rank == 0:
 
 # global simulation parameters
 M = 8           # number of neuronal populations
-K = 12          # number of cortical depths
+K = 13          # number of cortical depths
 T_sim = 50      # simulation time
 
 # set DMF parameters
@@ -51,29 +51,29 @@ for i in range(num_simulations):
     DMF_params = {'K': K, 'dt': 1e-4, 'T': T_sim}
     DMF_params = DMF_model.DMF_parameters(DMF_params)    # get default parameters
     # select parameters to explore
-    DMF_params['P_L23E>L23E'] = np.random.uniform(0, 0.15)
-    DMF_params['P_L4E>L23E']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L4E>L23I']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L4I>L23E']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L4I>L23I']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L23E>L4E']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L23E>L4I']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L23I>L4E']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L23I>L4I']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L23E>L5E']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L23E>L5I']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L5I>L23E']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L5I>L23I']  = np.random.uniform(0, 0.15)
-    DMF_params['P_L6E>L4E']   = np.random.uniform(0, 0.15)
-    DMF_params['P_L6E>L4I']   = np.random.uniform(0, 0.15)
-    DMF_params['U_L23E']   = np.random.uniform(0,  15)
-    DMF_params['U_L23I']   = np.random.uniform(0,  15)
-    DMF_params['U_L4E']    = np.random.uniform(0,  15)
-    DMF_params['U_L4I']    = np.random.uniform(0,  15)
-    DMF_params['U_L5E']    = np.random.uniform(0,  15)
-    DMF_params['U_L5I']    = np.random.uniform(0,  15)
-    DMF_params['U_L6E']    = np.random.uniform(0,  15)
-    DMF_params['U_L6I']    = np.random.uniform(0,  15)
+    # DMF_params['P_L23E>L23E'] = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L4E>L23E']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L4E>L23I']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L4I>L23E']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L4I>L23I']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L23E>L4E']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L23E>L4I']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L23I>L4E']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L23I>L4I']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L23E>L5E']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L23E>L5I']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L5I>L23E']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L5I>L23I']  = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L6E>L4E']   = np.random.uniform(0.5,  1.5)
+    # DMF_params['P_L6E>L4I']   = np.random.uniform(0.5,  1.5)
+    DMF_params['U_L23E']      = np.random.uniform(0,  15)
+    DMF_params['U_L23I']      = np.random.uniform(0,  15)
+    DMF_params['U_L4E']       = np.random.uniform(0,  15)
+    DMF_params['U_L4I']       = np.random.uniform(0,  15)
+    DMF_params['U_L5E']       = np.random.uniform(0,  15)
+    DMF_params['U_L5I']       = np.random.uniform(0,  15)
+    DMF_params['U_L6E']       = np.random.uniform(0,  15)
+    DMF_params['U_L6I']       = np.random.uniform(0,  15)
     DMF_theta.append(DMF_params)
 # save DMF exploration parameters 
 DMF_paramlist = ['P_L23E>L23E', 'P_L4E>L23E', 'P_L4E>L23I', 'P_L4I>L23E', 'P_L4I>L23I', 'P_L23E>L4E', 'P_L23E>L4I', 'P_L23I>L4E', 'P_L23I>L4I', 'P_L23E>L5E', 'P_L23E>L5I', 'P_L5I>L23E', 'P_L5I>L23I', 'P_L6E>L4E', 'P_L6E>L4I', 'U_L23E', 'U_L23I', 'U_L4E', 'U_L4I', 'U_L5E', 'U_L5I', 'U_L6E', 'U_L6I']

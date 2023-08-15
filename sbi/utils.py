@@ -61,9 +61,14 @@ def get_N2K(K, area='V1'):
     # N2K[:,6] = norm(cntr_L6, std_L6).pdf(np.arange(K))
 
     N2K[int(top_L23):int(bot_L23),[0, 1]] = 1
-    N2K[int(top_L4):int(bot_L4),[2, 3]]   = 1
-    N2K[int(top_L5):int(bot_L5),[4, 5]]   = 1
-    N2K[int(top_L6):int(bot_L6),[6, 7]]   = 1
+    N2K[int(top_L4):int(bot_L4),  [2, 3]] = 1
+    N2K[int(top_L5):int(bot_L5),  [4, 5]] = 1
+    N2K[int(top_L6):int(bot_L6),  [6, 7]] = 1
+
+    # N2K[int(top_L23):int(bot_L23),[0]] = 1
+    # N2K[int(top_L4):int(bot_L4),  [2]] = 1
+    # N2K[int(top_L5):int(bot_L5),  [4]] = 1
+    # N2K[int(top_L6):int(bot_L6),  [6]] = 1
 
     return N2K, TH
 
