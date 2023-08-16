@@ -21,30 +21,29 @@ def LBR_sim(cbf, P, *args):
 	##
 	# Hemodynamic model parameters
 	#------------------------------------------------------
-    K = P['K']		# Number of depths
+    K = int(P['K'])		# Number of depths
 
 	# BASELINE PARAMETERS
-    V0t 	= P['V0t']		# Total amount of CBV0 within GM tissue (in mL)
-    V0t_p	= P['V0t_p']	# Total amount of CBV0 in pial vein (in mL)
+    V0t 	= np.float128(P['V0t'])		# Total amount of CBV0 within GM tissue (in mL)
+    V0t_p	= np.float128(P['V0t_p'])	# Total amount of CBV0 in pial vein (in mL)
 
-    w_v		= P['w_v']		# Fraction of CBV0 in venules with respect to the total
-    w_d  	= 1-w_v			# Fraction of CBV0 in ascending vein with respect to the total
+    w_v		= np.float128(P['w_v'])		# Fraction of CBV0 in venules with respect to the total
+    w_d  	= 1-w_v			            # Fraction of CBV0 in ascending vein with respect to the total
 
-    s_v 	= P['s_v']		# Slope of CBV0 increase towards the surface in venules
-    s_d  	= P['s_d']		# Slope of CBV0 increase towards the surface in ascending veins
+    s_v 	= np.float128(P['s_v'])		# Slope of CBV0 increase towards the surface in venules
+    s_d  	= np.float128(P['s_d'])		# Slope of CBV0 increase towards the surface in ascending veins
 
     # Depth-specific CBV0
-    if len(P['x_v']) == K:              # For venules
-        x_v  = P['x_v']                	# Depth-specific fractions defined by user
+    if len(P['x_v']) == K:                  # For venules
+        x_v  = P['x_v'].astype(np.float128) # Depth-specific fractions defined by user
     else:
-        x_v  = 10+s_v*np.flipud(P['l']) # Possibility to define linear increase (default s_v = 0)
+        x_v  = (10+s_v*np.flipud(P['l'])).astype(np.float128) # Possibility to define linear increase (default s_v = 0)
+    x_v      = x_v/np.sum(x_v)          # Fraction of CBV0 across depths in venules 
 
-        x_v      = x_v/np.sum(x_v)          # Fraction of CBV0 across depths in venules 
-
-    if len(P['x_v']) == K:              # For ascending vein
-        x_d  = P['x_d']                 # Depth-specific fractions defined by user
+    if len(P['x_v']) == K:                  # For ascending vein
+        x_d  = P['x_d'].astype(np.float128) # Depth-specific fractions defined by user
     else:
-        x_d  = 10+s_d*np.flipud(P['l']) # Possibility to define linear increase 
+        x_d  = 10+s_d*np.flipud(P['l']).astype(np.float128) # Possibility to define linear increase 
     x_d      = x_d/np.sum(x_d)          # Fraction of CBV0 across depths in venules 
 
     V0v      = V0t*w_v*x_v              # CBV0 in venules
@@ -53,9 +52,9 @@ def LBR_sim(cbf, P, *args):
 
 	# Transit time through venules (or microvasculature in general)
     if hasattr(P['t0v'], '__len__'):
-        t0v = P['t0v']
+        t0v = P['t0v'].astype(np.float128)
     else:
-        t0v = np.ones(K)*P['t0v']
+        t0v = (np.ones(K)*P['t0v']).astype(np.float128)
 
     # Depth-specific baseline CBF
     F0v = V0v/t0v
@@ -74,53 +73,53 @@ def LBR_sim(cbf, P, *args):
 
 	# Baseline oxygen extraction fraction
     if hasattr(P['E0v'], '__len__'):
-        E0v        = P['E0v']     # depth-specific defined by user
+        E0v        = P['E0v'].astype(np.float128)     # depth-specific defined by user
     else:
-        E0v        = np.ones(K)*P['E0v']
+        E0v        = (np.ones(K)*P['E0v']).astype(np.float128)
     if hasattr(P['E0d'], '__len__'):
-        E0d        = P['E0d']      # depth-specific defined by user
+        E0d        = P['E0d'].astype(np.float128)      # depth-specific defined by user
     else:
-        E0d        = np.ones(K)*P['E0d']
-    E0p        = P['E0p']
+        E0d        = (np.ones(K)*P['E0d']).astype(np.float128)
+    E0p        = np.float128(P['E0p'])
 
 
 	# PARAMETERS DESCRIBING RELATIVE RELATIONSHIPS BETWEEN PHYSIOLOGICAL VARIABLES:
 	# n-ratio (= (cbf-1)./(cmro2-1)). Not used if cmro2 response is directly specified as an input
     if hasattr(P['n'], '__len__'):      # For venules (microvasculature)
-        n      = P['n']                	# Depth-specific defined by user
+        n      = np.float128(P['n'])    # Depth-specific defined by user
     else:
-        n      = np.ones(K)*P['n']      # Default
+        n      = (np.ones(K)*P['n']).astype(np.float128)                # Default
 
 	# Grubb's exponent alpha (i.e CBF-CBV steady-state relationship)
-    if hasattr(P['alpha_v'], '__len__'):		# For venules
-        alpha_v    = P['alpha_v']       		# Depth-specific defined by user 
+    if hasattr(P['alpha_v'], '__len__'):		                        # For venules
+        alpha_v    = P['alpha_v'].astype(np.float128)       		    # Depth-specific defined by user 
     else:
-        alpha_v    = np.ones(K)*P['alpha_v']  	# Default
-    if hasattr(P['alpha_d'], '__len__'):		# For ascending vein
-        alpha_d    = P['alpha_d']             	# Depth-specific defined by user  
+        alpha_v    = (np.ones(K)*P['alpha_v']).astype(np.float128)  	# Default
+    if hasattr(P['alpha_d'], '__len__'):		                        # For ascending vein
+        alpha_d    = P['alpha_d'].astype(np.float128)             	    # Depth-specific defined by user  
     else:
-        alpha_d    = np.ones(K)*P['alpha_d']  	# Default
-    alpha_p        = P['alpha_p']      			# For pial vein
+        alpha_d    = (np.ones(K)*P['alpha_d']).astype(np.float128)  	# Default
+    alpha_p        = np.float128(P['alpha_p'])      			        # For pial vein
 
 	# CBF-CBV uncoupling (tau) during inflation and deflation:
-    if hasattr(P['tau_v_in'], '__len__'):   	# For venules (inflation)
-        tau_v_in  = P['tau_v_in']             	# Depth-specific defined by user
+    if hasattr(P['tau_v_in'], '__len__'):   	                        # For venules (inflation)
+        tau_v_in  = P['tau_v_in'].astype(np.float128)             	    # Depth-specific defined by user
     else:
-        tau_v_in  = np.ones(K)*P['tau_v_in']  	# Default  
-    if hasattr(P['tau_v_de'], '__len__'):   	# For venules (deflation)
-        tau_v_de  = P['tau_v_de']             	# Depth-specific defined by user  
+        tau_v_in  = (np.ones(K)*P['tau_v_in']).astype(np.float128) 	    # Default  
+    if hasattr(P['tau_v_de'], '__len__'):   	                        # For venules (deflation)
+        tau_v_de  = P['tau_v_de'].astype(np.float128)             	    # Depth-specific defined by user  
     else:
-        tau_v_de  = np.ones(K)*P['tau_v_de']  	# Default  
-    if hasattr(P['tau_d_in'], '__len__'):   	# For ascending vein (inflation)
-        tau_d_in  = P['tau_d_in']	            # Depth-specific defined by user 
+        tau_v_de  = (np.ones(K)*P['tau_v_de']).astype(np.float128)  	# Default  
+    if hasattr(P['tau_d_in'], '__len__'):   	                        # For ascending vein (inflation)
+        tau_d_in  = np.float128(P['tau_d_in']).astype(np.float128)	    # Depth-specific defined by user 
     else:
-        tau_d_in  = np.ones(K)*P['tau_d_in']   	# Default  
-    if hasattr(P['tau_d_de'], '__len__'):   	# For ascending vein (deflation)
-        tau_d_de  = P['tau_d_de']             	# Depth-specific defined by user 
+        tau_d_in  = (np.ones(K)*P['tau_d_in']).astype(np.float128)   	# Default  
+    if hasattr(P['tau_d_de'], '__len__'):   	                        # For ascending vein (deflation)
+        tau_d_de  = P['tau_d_de'].astype(np.float128)             	    # Depth-specific defined by user 
     else:
-        tau_d_de  = np.ones(K)*P['tau_d_de']  	# Default
-    tau_p_in      = P['tau_p_in']       		# For pial vein (inflation)
-    tau_p_de      = P['tau_p_de']       		# For pial vein (deflation)
+        tau_d_de  = (np.ones(K)*P['tau_d_de']).astype(np.float128)  	# Default
+    tau_p_in      = np.float128(P['tau_p_in'])       		            # For pial vein (inflation)
+    tau_p_de      = np.float128(P['tau_p_de'])       		            # For pial vein (deflation)
 
 
 
@@ -128,84 +127,84 @@ def LBR_sim(cbf, P, *args):
 	# Parameters for laminar BOLD signal equation (for 7 T field strenght):
 	#------------------------------------------------------
 	# Baseline CBV in fraction with respect to GM tissue
-    V0vq = V0v/100*K
-    V0dq = V0d/100*K
-    V0pq = V0p/100*K
+    V0vq = np.float128(V0v/100*K)
+    V0dq = np.float128(V0d/100*K)
+    V0pq = np.float128(V0p/100*K)
 
-    TE     = P['TE']	 	# echo-time (sec) 
+    TE     = np.float128(P['TE'])	 	 # echo-time (sec) 
 
-    Hct_v  = P['Hct_v']		# Hematocrit fraction
-    Hct_d  = P['Hct_d']
-    Hct_p  = P['Hct_p']
-    B0     = P['B0']   		# Field strenght        
-    gyro   = P['gyro']      # Gyromagnetic constant 
-    suscep = P['suscep']    # Susceptibility difference
+    Hct_v  = np.float128(P['Hct_v'])	 # Hematocrit fraction
+    Hct_d  = np.float128(P['Hct_d'])
+    Hct_p  = np.float128(P['Hct_p'])
+    B0     = np.float128(P['B0'])   	 # Field strenght        
+    gyro   = np.float128(P['gyro'])      # Gyromagnetic constant 
+    suscep = np.float128(P['suscep'])    # Susceptibility difference
 
-    nu0v   = suscep*gyro*Hct_v*B0
-    nu0d   = suscep*gyro*Hct_d*B0
-    nu0p   = suscep*gyro*Hct_p*B0 
+    nu0v   = np.float128(suscep*gyro*Hct_v*B0)
+    nu0d   = np.float128(suscep*gyro*Hct_d*B0)
+    nu0p   = np.float128(suscep*gyro*Hct_p*B0)
 
 	# Water proton density 
-    rho_t  = P['rho_t']  # In GM tissue
-    rho_v  = P['rho_v']  # In blood (venules) Ref. Lu et al. (2002) NeuroImage
-    rho_d  = P['rho_d']  # In blood (ascening vein) 
-    rho_p  = P['rho_p']  # In blood (pial vein) 
-    rho_tp = P['rho_tp'] # In in tissue and CSF 
+    rho_t  = np.float128(P['rho_t'])  # In GM tissue
+    rho_v  = np.float128(P['rho_v'])  # In blood (venules) Ref. Lu et al. (2002) NeuroImage
+    rho_d  = np.float128(P['rho_d'])  # In blood (ascening vein) 
+    rho_p  = np.float128(P['rho_p'])  # In blood (pial vein) 
+    rho_tp = np.float128(P['rho_tp']) # In in tissue and CSF 
 
 	# Relaxation rates (in sec-1):
     if hasattr(P['R2s_t'],'__len__'):   	# For tissue
-        R2s_t  = P['R2s_t']
+        R2s_t  = P['R2s_t'].astype(np.float128)
     else:
-        R2s_t  = np.ones(K)*P['R2s_t']   	# (sec-1)
+        R2s_t  = (np.ones(K)*P['R2s_t']).astype(np.float128)   	# (sec-1)
     if hasattr(P['R2s_v'],'__len__'):		# For venules
-        R2s_v  = P['R2s_v']               	# (sec-1)
+        R2s_v  = P['R2s_v'].astype(np.float128)               	# (sec-1)
     else:
-        R2s_v  = np.ones(K)*P['R2s_v']  	# (sec-1) 
+        R2s_v  = (np.ones(K)*P['R2s_v']).astype(np.float128)  	# (sec-1) 
     if hasattr(P['R2s_d'],'__len__'): 		# For ascening vein
-        R2s_d  = P['R2s_d']           		# (sec-1)
+        R2s_d  = P['R2s_d'].astype(np.float128)           		# (sec-1)
     else:
-        R2s_d  = np.ones(K)*P['R2s_d'] 		# (sec-1)  
-    R2s_p  = P['R2s_p']         			# For pial vein 
+        R2s_d  = (np.ones(K)*P['R2s_d']).astype(np.float128) 	# (sec-1)  
+    R2s_p  = np.float128(P['R2s_p'])         			# For pial vein 
 
 	# (Baseline) Intra-to-extra-vascular signal ratio
-    ep_v   = rho_v/rho_t*np.exp(-TE*R2s_v)/np.exp(-TE*R2s_t) 	# For venules
-    ep_d   = rho_d/rho_t*np.exp(-TE*R2s_d)/np.exp(-TE*R2s_t)	# For ascending vein
-    ep_p   = rho_p/rho_tp*np.exp(-TE*R2s_p)/np.exp(-TE*R2s_t)	# For pial vein 
+    ep_v   = (rho_v/rho_t*np.exp(-TE*R2s_v)/np.exp(-TE*R2s_t)).astype(np.float128) 	# For venules
+    ep_d   = (rho_d/rho_t*np.exp(-TE*R2s_d)/np.exp(-TE*R2s_t)).astype(np.float128)	# For ascending vein
+    ep_p   = (rho_p/rho_tp*np.exp(-TE*R2s_p)/np.exp(-TE*R2s_t)).astype(np.float128)	# For pial vein 
 
 	# Slope of change in R2* of blood with change in extraction fration during activation 
-    r0v    = 228	# For venules   
-    r0d    = 232    # For ascending vein
-    r0p    = 236    # For pial vein
+    r0v    = np.float128(228)	 # For venules   
+    r0d    = np.float128(232)    # For ascending vein
+    r0p    = np.float128(236)    # For pial vein
 
-    H0     = 1/(1 - V0vq - V0dq + ep_v*V0vq + ep_d*V0dq)	# constant in front
-    H0p    = 1/(1 - V0pq + ep_p*V0pq)
+    H0     = (1/(1 - V0vq - V0dq + ep_v*V0vq + ep_d*V0dq)).astype(np.float128)	# constant in front
+    H0p    = (1/(1 - V0pq + ep_p*V0pq)).astype(np.float128)
 
-    k1v     = 4.3*nu0v*E0v*TE
-    k2v     = ep_v*r0v*E0v*TE
-    k3v     = 1 - ep_v
+    k1v     = np.float128(4.3*nu0v*E0v*TE)
+    k2v     = np.float128(ep_v*r0v*E0v*TE)
+    k3v     = np.float128(1 - ep_v)
 
-    k1d     = 4.3*nu0d*E0d*TE
-    k2d     = ep_v*r0d*E0d*TE
-    k3d     = 1 - ep_d
+    k1d     = np.float128(4.3*nu0d*E0d*TE)
+    k2d     = np.float128(ep_v*r0d*E0d*TE)
+    k3d     = np.float128(1 - ep_d)
 
-    k1p     = 4.3*nu0p*E0p*TE
-    k2p     = ep_p*r0p*E0p*TE
-    k3p     = 1 - ep_p
+    k1p     = np.float128(4.3*nu0p*E0p*TE)
+    k2p     = np.float128(ep_p*r0p*E0p*TE)
+    k3p     = np.float128(1 - ep_p)
 
 
 
 	##
 	# Initial conditions
 	#------------------------------------------------------
-    Xk       = np.zeros((K,4))
-    Xp       = np.zeros((2))
+    Xk       = np.zeros((K,4)).astype(np.float128)
+    Xp       = np.zeros((2)).astype(np.float128)
 
     yk       = Xk
     yp       = Xp
 
-    f_d      = np.ones(K)
-    dv_d     = np.ones(K)
-    dHb_d    = np.ones(K)
+    f_d      = np.ones(K).astype(np.float128)
+    dv_d     = np.ones(K).astype(np.float128)
+    dHb_d    = np.ones(K).astype(np.float128)
 
     tau_v    = tau_v_in
     tau_d    = tau_d_in
@@ -215,8 +214,8 @@ def LBR_sim(cbf, P, *args):
     dt = P['dt']
     t_steps = int(P['T']/dt)
 
-    LBR       = np.zeros((int(P['T']/dt),K))
-    LBRpial   = np.zeros((int(P['T']/dt),K))
+    LBR       = np.zeros((int(P['T']/dt),K)).astype(np.float128)
+    LBRpial   = np.zeros((int(P['T']/dt),K)).astype(np.float128)
 
     Y = {}
     Y['fa'] = np.zeros((t_steps, K))
@@ -238,7 +237,7 @@ def LBR_sim(cbf, P, *args):
         Xp      = np.exp(Xp)
 	    
 	    # model input (laminar CBF response):
-        f_a = cbf[t,:].T
+        f_a = (cbf[t,:].T).astype(np.float128)
 	    
 	    # VENULES COMPARTMENTS:
 	    #--------------------------------------------------------------------------

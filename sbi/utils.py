@@ -54,21 +54,18 @@ def get_N2K(K, area='V1'):
     TH = np.concatenate([siz_L23*np.ones(siz_L23), siz_L4*np.ones(siz_L4), siz_L5*np.ones(siz_L5), siz_L6*np.ones(siz_L6)])    
     
     N2K  = np.zeros([K,N])
-  
-    # N2K[:,0] = norm(cntr_L23,std_L23).pdf(np.arange(K))
-    # N2K[:,2] = norm(cntr_L4, std_L4).pdf(np.arange(K))
-    # N2K[:,4] = norm(cntr_L5, std_L5).pdf(np.arange(K))
-    # N2K[:,6] = norm(cntr_L6, std_L6).pdf(np.arange(K))
 
-    N2K[int(top_L23):int(bot_L23),[0, 1]] = 1
-    N2K[int(top_L4):int(bot_L4),  [2, 3]] = 1
-    N2K[int(top_L5):int(bot_L5),  [4, 5]] = 1
-    N2K[int(top_L6):int(bot_L6),  [6, 7]] = 1
+    # Excitatory contribution
+    N2K[int(top_L23):int(bot_L23),0] = 1
+    N2K[int(top_L4):int(bot_L4),  2] = 1
+    N2K[int(top_L5):int(bot_L5),  4] = 1
+    N2K[int(top_L6):int(bot_L6),  6] = 1
 
-    # N2K[int(top_L23):int(bot_L23),[0]] = 1
-    # N2K[int(top_L4):int(bot_L4),  [2]] = 1
-    # N2K[int(top_L5):int(bot_L5),  [4]] = 1
-    # N2K[int(top_L6):int(bot_L6),  [6]] = 1
+    # Inhibitory contribution
+    N2K[int(top_L23):int(bot_L23),1] = .25
+    N2K[int(top_L4):int(bot_L4),  3] = .25
+    N2K[int(top_L5):int(bot_L5),  5] = .25
+    N2K[int(top_L6):int(bot_L6),  7] = .25
 
     return N2K, TH
 

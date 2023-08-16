@@ -91,16 +91,17 @@ def worker(K=12, T=20, DMF=None, test=False):
     # simulate
     syn_signal = DMF_model.DMF_sim(U['u'], DMF_params)    # [T, M]
 
-    # syn_signal[:, [0, 2, 4, 6]] = syn_signal[:, [0, 2, 4, 6]] / syn_signal[:, [1, 3, 5, 7]] - syn_signal[onset - int(1/DMF_params['dt']), [0, 2, 4, 6]] / syn_signal[onset - int(1/DMF_params['dt']), [1, 3, 5, 7]]
-    
+    # syn_signal[:, [0, 2, 4, 6]] = syn_signal[:, [0, 2, 4, 6]] + abs(syn_signal[:, [1, 3, 5, 7]])
+
+
     N2K, TH = get_N2K(K) # [K, M]
 
     neuro = np.zeros((syn_signal.shape[0], K))
     for t in range(np.shape(syn_signal)[0]):
-        neuro[t] = np.sum(N2K*np.maximum(np.zeros(DMF_params['M']), syn_signal[t]), axis=1)   # switch sign of inhibitory synaptic activity
+        neuro[t] = np.sum(N2K*np.maximum(np.zeros(DMF_params['M']), syn_signal[t]), axis=1)    # switch sign of inhibitory synaptic activity
 
     # deviation from baseline (at t = onset-1/dt)
-    neuro = neuro - neuro[onset - int(1/DMF_params['dt'])]
+    neuro = neuro - neuro[onset - int(.1/DMF_params['dt'])]
 
     # remove simulation up to fixed point (t < 1/dt)
     neuro = neuro[int(1/DMF_params['dt']):]
@@ -109,11 +110,7 @@ def worker(K=12, T=20, DMF=None, test=False):
     # neuro = neuro * np.dot(N2K, DMF_params['N']) * .05   # voxel width = 0.3 mm
     # neuro /= TH
 
-    neuro *= 1
-
-    # smooth across layers
-    # from scipy import ndimage
-    # neuro = ndimage.gaussian_filter1d(neuro, K/(4*2), 1)
+    neuro *= 100
 
     new_T = T - 1
     NVC_params['T'] = new_T
@@ -133,8 +130,10 @@ def worker(K=12, T=20, DMF=None, test=False):
 
     lbr, lbrpial, Y = LBR_model.LBR_sim(cbf_, LBR_params)
 
-    # return {'neuro': neuro, 'cbf': cbf, 'lbr': lbr}
+    lbr = lbr.astype(np.float64)
+    lbrpial = lbrpial.astype(np.float64)
 
+    # return {'neuro': neuro, 'cbf': cbf, 'lbr': lbr}
 
     if np.isnan(lbr).any() and np.isnan(cbf).any() and np.isnan(neuro).any():       # check for nan values
         peak_Posi = np.nan
