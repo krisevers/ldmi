@@ -135,7 +135,7 @@ def worker(K=12, T=20, DMF=None, test=False):
 
     # return {'neuro': neuro, 'cbf': cbf, 'lbr': lbr}
 
-    if np.isnan(lbr).any() and np.isnan(cbf).any() and np.isnan(neuro).any():       # check for nan values
+    if np.isnan(lbr).any() or np.isnan(cbf).any() or np.isnan(neuro).any():       # check for nan values
         peak_Posi = np.nan
         peak_Ampl = np.nan
         peak_Area = np.nan
@@ -153,6 +153,7 @@ def worker(K=12, T=20, DMF=None, test=False):
         unde_Area = np.zeros((K))
         up_Slope = np.zeros((K))
         down_Slope = np.zeros((K))
+
         for k in range(K):
             peak_Ampl[k] = np.max(lbr[:, k])                                                # response peak amplitude
             peak_Posi[k] = int(np.where(lbr[:, k] == peak_Ampl[k])[0][0])                   # response peak latency
@@ -245,14 +246,14 @@ if __name__ == '__main__':
         # DMF_params['U_L5I']    = np.random.uniform(0,  15)
         # DMF_params['U_L6E']    = np.random.uniform(0,  15)
         # DMF_params['U_L6I']    = np.random.uniform(0,  15)
-        DMF_params['U_L23E']   = 0
-        DMF_params['U_L23I']   = 0
-        DMF_params['U_L4E']    = 15
-        DMF_params['U_L4I']    = 10
-        DMF_params['U_L5E']    = 0
-        DMF_params['U_L5I']    = 0
-        DMF_params['U_L6E']    = 0
-        DMF_params['U_L6I']    = 0
+        DMF_params['U_L23E']      = np.random.uniform(0,  15)
+        DMF_params['U_L23I']      = np.random.uniform(0,  15)
+        DMF_params['U_L4E']       = np.random.uniform(0,  15)
+        DMF_params['U_L4I']       = np.random.uniform(0,  15)
+        DMF_params['U_L5E']       = np.random.uniform(0,  15)
+        DMF_params['U_L5I']       = np.random.uniform(0,  15)
+        DMF_params['U_L6E']       = np.random.uniform(0,  15)
+        DMF_params['U_L6I']       = np.random.uniform(0,  15)
         DMF_theta.append(DMF_params)
     # save DMF exploration parameters 
     DMF_paramlist = ['P_L23E>L23E', 'P_L4E>L23E', 'P_L4E>L23I', 'P_L4I>L23E', 'P_L4I>L23I', 'P_L23E>L4E', 'P_L23E>L4I', 'P_L23I>L4E', 'P_L23I>L4I', 'P_L23E>L5E', 'P_L23E>L5I', 'P_L5I>L23E', 'P_L5I>L23I', 'P_L6E>L4E', 'P_L6E>L4I', 'U_L23E', 'U_L23I', 'U_L4E', 'U_L4I', 'U_L5E', 'U_L5I', 'U_L6E', 'U_L6I']

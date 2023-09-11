@@ -77,6 +77,10 @@ if __name__=="__main__":
     theta_keys = ['P_L23E>L23E', 'P_L4E>L23E', 'P_L4E>L23I', 'P_L4I>L23E', 'P_L4I>L23I', 'P_L23E>L4E', 'P_L23E>L4I', 'P_L23I>L4E', 'P_L23I>L4I', 'P_L23E>L5E', 'P_L23E>L5I', 'P_L5I>L23E', 'P_L5I>L23I', 'P_L6E>L4E', 'P_L6E>L4I', 
                   'U_L23E', 'U_L23I', 'U_L4E', 'U_L4I', 'U_L5E', 'U_L5I', 'U_L6E', 'U_L6I' 
                  ]
+    
+    theta_keys = ['U_L23E', 'U_L23I', 'U_L4E', 'U_L4I', 'U_L5E', 'U_L5I', 'U_L6E', 'U_L6I' 
+                ]
+
 
     data_keys = ['peak_Posi', 'peak_Ampl', 'peak_Area', 'unde_Posi', 'unde_Ampl', 'unde_Area', 'up_Slope', 'down_Slope']
 
