@@ -1,5 +1,5 @@
 # Laminar Dynamic Model Inference
-Fast training and inference of dynamic model parameters using simulation based inference approaches.
+Fast training and amortized inference of dynamic model parameters using simulation based inference approaches.
 
 
 ## Installation
