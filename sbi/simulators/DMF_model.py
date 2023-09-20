@@ -5,7 +5,6 @@ def DMF_sim(U, P):
 
     M = P['M']  # number of populations
 
-    # Neuronal parameters:
     # --------------------------------------------------------------------------
     # Initial condtions:
     I = np.zeros(M)
@@ -26,7 +25,7 @@ def DMF_sim(U, P):
         I += dt * np.dot(P['W'], F)
         I += dt * (P['W_bg'] * P['nu_bg'])
         I += dt * U[t, :]
-        I += np.sqrt(dt/P['tau_s']) * P['sigma'] * np.random.randn(M)
+        # I += np.sqrt(dt/P['tau_s']) * P['sigma'] * np.random.randn(M)
         H += dt * ((-H + P['R']*I) / P['tau_m'])
         F = f(H, a=P['a'], b=P['b'], d=P['d'])
 
@@ -75,7 +74,3 @@ def DMF_parameters(P):
     P['d'] = 8.9e-3
 
     return P
-
-
-# TODO: add DMF model equations and PD14 parameters
-# TODO: add proper N2K transformation with the right cortical depth profiles for the layers of the model
