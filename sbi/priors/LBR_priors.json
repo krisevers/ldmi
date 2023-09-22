@@ -2,18 +2,18 @@
         "V0t": {
           "bounds": {
               "lower": 0.1,
-              "upper": 2.0
+              "upper": 3.0
           },
           "distribution": "uniform",
-          "default": P['V0t']
+          "default": 2.5
         },
         "V0t_p": {
           "bounds": {
               "lower": 0.1,
-              "upper": 2.0
+              "upper": 3.0
           },
           "distribution": "uniform",
-          "default": P['V0t_p']
+          "default": 1.0
         },
         "w_v": {
           "bounds": {
@@ -21,15 +21,15 @@
               "upper": 2.0
           },
           "distribution": "uniform",
-          "default": P['w_v']
+          "default": 0.5
         },
         "s_v": {
           "bounds": {
-              "lower": 0.1,
+              "lower": 0.0,
               "upper": 2.0
           },
           "distribution": "uniform",
-          "default": P['s_v']
+          "default": 0.0
         },
         "s_d": {
           "bounds": {
@@ -37,7 +37,7 @@
               "upper": 2.0
           },
           "distribution": "uniform",
-          "default": P['s_d']
+          "default": 0.3
         },
         "t0v": {
           "bounds": {
@@ -45,175 +45,175 @@
               "upper": 2.0
           },
           "distribution": "uniform",
-          "default": P['t0v']
+          "default": 1.0
         },
         "E0v": {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 0.25,
+              "upper": 0.5
           },
           "distribution": "uniform",
-          "default": P['E0v']
+          "default": 0.35
         },
         "E0d" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 0.25,
+              "upper": 0.5
           },
           "distribution": "uniform",
-          "default": P['E0d']
+          "default": 0.35
         },
         "E0p" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 0.25,
+              "upper": 0.5
           },
           "distribution": "uniform",
-          "default": P['E0p']
+          "default": 0.35
         },
         "alpha_v" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 0.0,
+              "upper": 0.6
           },
           "distribution": "uniform",
-          "default": P['alpha_v']
+          "default": 0.3
         },
         "alpha_d" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 0.0,
+              "upper": 0.6
           },
           "distribution": "uniform",
-          "default": P['alpha_d']
+          "default": 0.2
         },
         "alpha_p" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 0.0,
+              "upper": 0.6
           },
           "distribution": "uniform",
-          "default": P['alpha_p']
+          "default": 0.1
         },
         "n" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 1,
+              "upper": 8
           },
           "distribution": "uniform",
-          "default": 1.0
+          "default": 4
         },
         "tau_v_in" : {
           "bounds": {
               "lower": 0.1,
-              "upper": 2.0
+              "upper": 4.0
           },
-          "distribution": "loguniform",
-          "default": P['tau_v_in']
+          "distribution": "uniform",
+          "default": 2.0
         },
         "tau_v_de" : {
           "bounds": {
               "lower": 0.1,
-              "upper": 2.0
+              "upper": 4.0
           },
-          "distribution": "loguniform",
-          "default": P['tau_v_de']
+          "distribution": "uniform",
+          "default": 2.0
         },
         "tau_d_in" : {
           "bounds": {
               "lower": 0.1,
-              "upper": 2.0
+              "upper": 4.0
           },
-          "distribution": "loguniform",
-          "default": P['tau_d_in']
+          "distribution": "uniform",
+          "default": 2.0
         },
         "tau_d_de" : {
           "bounds": {
               "lower": 0.1,
-              "upper": 2.0
+              "upper": 4.0
           },
-          "distribution": "loguniform",
-          "default": P['tau_d_de']
+          "distribution": "uniform",
+          "default": 2.0
         },
         "tau_p_in" : {
           "bounds": {
               "lower": 0.1,
-              "upper": 2.0
+              "upper": 4.0
           },
-          "distribution": "loguniform",
-          "default": P['tau_p_in']
+          "distribution": "uniform",
+          "default": 2.0
         },
         "tau_p_de" : {
           "bounds": {
               "lower": 0.1,
-              "upper": 2.0
+              "upper": 4.0
           },
-          "distribution": "loguniform",
-          "default": P['tau_p_de']
+          "distribution": "uniform",
+          "default": 2.0
         },
         "TE" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 0.001,
+              "upper": 0.1
           },
-          "distribution": "loguniform",
-          "default": P['TE']
+          "distribution": "uniform",
+          "default": 0.028
         },
         "Hct_v" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 0.32,
+              "upper": 0.38
           },
-          "distribution": "loguniform",
-          "default": 0.4
+          "distribution": "uniform",
+          "default": 0.35
         },
         "Hct_d" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 0.35,
+              "upper": 0.41
           },
-          "distribution": "loguniform",
-          "default": 0.4
+          "distribution": "uniform",
+          "default": 0.38
         },
         "Hct_p" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 0.38,
+              "upper": 0.44
           },
-          "distribution": "loguniform",
-          "default": 0.4
+          "distribution": "uniform",
+          "default": 0.42
         },
         "B0" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 1,
+              "upper": 10
           },
-          "distribution": "loguniform",
-          "default": 3.0
+          "distribution": "uniform",
+          "default": 7
         },
         "gyro" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 100000000,
+              "upper": 1000000000
           },
-          "distribution": "loguniform",
-          "default": 42.58
+          "distribution": "uniform",
+          "default": 267663694.08585042
         },
         "suscep" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 1e-8,
+              "upper": 1e-5
           },
-          "distribution": "loguniform",
-          "default": -9.04e-6
+          "distribution": "uniform",
+          "default": 2.64e-7
         },
         "rho_t" : {
           "bounds": {
               "lower": 0.1,
               "upper": 2.0
           },
-          "distribution": "loguniform",
-          "default": 1.0
+          "distribution": "uniform",
+          "default": 0.89
         },
         "rho_tp" : {
           "bounds": {
@@ -221,38 +221,38 @@
               "upper": 2.0
           },
           "distribution": "uniform",
-          "default": 1.0
+          "default": 0.95
         },
         "R2s_t" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 30,
+              "upper": 45
           },
           "distribution": "uniform",
-          "default": 1.0
+          "default": 34
         },
         "R2s_v" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 60,
+              "upper": 250
           },
           "distribution": "uniform",
-          "default": 1.0
+          "default": 80
         },
         "R2s_d" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 60,
+              "upper": 250
           },
           "distribution": "uniform",
-          "default": 1.0
+          "default": 85
         },
         "R2s_p" : {
           "bounds": {
-              "lower": 0.1,
-              "upper": 2.0
+              "lower": 60,
+              "upper": 250
           },
           "distribution": "uniform",
-          "default": 1.0
-        },
+          "default": 90
+        }
 }
