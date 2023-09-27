@@ -19,7 +19,7 @@ class LBR:
         self.P['V0t']   = 2.5  	# Total (regional) amount of CBV0 in the gray matter (in mL) [1-6]
         self.P['V0t_p'] = 1  	# Total (regional) amount of CBV0 in the pial vein (mL) [1-6]
 
-        self.P['w_v'] = 0.5  # CBV0 fraction of microvasculature (i.e. venules here )with respect to the total amount 
+        self.P['w_v'] = 0.5  # CBV0 fraction of microvasculature (i.e. venules here) with respect to the total amount 
         self.P['x_v'] = []   # CBV0 fraction across depths in venules 
         self.P['x_d'] = []   # CBV0 fraction across depths in ascending veins
         self.P['s_v'] = 0    # Slope of CBV increase (decrease) in venules [0-0.3]

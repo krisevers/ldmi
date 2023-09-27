@@ -97,7 +97,7 @@ def syn_to_neuro(syn, K, E_scale=1, I_scale=1, baseline=0):
     
     neuro = np.zeros((int(np.shape(syn)[0]), K))
     for t in range(np.shape(neuro)[0]):
-        neuro[t] = np.sum(N2K*syn[t], axis=1)
+        neuro[t] = np.sum(N2K*abs(syn[t]), axis=1)
 
     # substract baseline
     neuro = neuro - neuro[baseline]

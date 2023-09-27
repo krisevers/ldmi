@@ -4,7 +4,6 @@ import simulators.DCM_model as DCM_model
 import simulators.NVC_model as NVC_model
 import simulators.LBR_model as LBR_model
 
-
 """
 Selection of parameter worker functions for DCM > NVC > LBR models
 """
@@ -147,7 +146,7 @@ if __name__ == '__main__':
     size = comm.Get_size()
 
     values = []
-    num_simulations = size*2
+    num_simulations = size
 
     num_simulations = 100
 
