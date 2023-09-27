@@ -138,6 +138,8 @@ if __name__ == '__main__':
         import pylab as plt
         plt.figure()
         plt.imshow(X[0]['lbr'].T, aspect='auto', interpolation='none')
+        plt.xlabel('time (TR)')
+        plt.ylabel('cortical depth (K)')
         plt.colorbar()
         plt.savefig('png/test/imshow_lbr_ex{}.png'.format(0))
 
