@@ -53,7 +53,7 @@ def worker(E, O, theta=None):
 
     # convert synaptic activity to neural response
     idx_baseline = int(1/DMF_model.P['dt'])  # ms
-    neuro = syn_to_neuro(syn_signal, E['K'], E_scale=40, I_scale=20, baseline=idx_baseline)  # [T, K]
+    neuro = syn_to_neuro(syn_signal, E['K'], E_scale=20, I_scale=0, baseline=idx_baseline)  # [T, K]
 
     # remove simulation up to fixed point (t < 1/dt)
     neuro = neuro[int(1/DMF_model.P['dt']):]
@@ -104,14 +104,14 @@ if __name__ == '__main__':
 
     # eperimental parameters (keep fixed across simulations)
     K = 12          # number of cortical depths
-    T_sim = 80      # simulation time
+    T_sim = 80     # simulation time
     L23E, L23I, L4E, L4I, L5E, L5I, L6E, L6I = 0, 1, 2, 3, 4, 5, 6, 7
     E = {'T': T_sim, 'TR': 2, 'K': K, 
          'stimulations': 
-                            [{'onset': 5,  'duration': 10, 'amplitude': 10,  'target': [L23E]},
-                             {'onset': 25, 'duration': 10, 'amplitude': 10,  'target': [L4E]},
-                             {'onset': 45, 'duration': 10, 'amplitude': 10,  'target': [L5E]},
-                             {'onset': 65, 'duration': 10, 'amplitude': 10,  'target': [L6E]}]
+                            [{'onset': 5,  'duration': 5, 'amplitude': 20,  'target': [L23E]},
+                             {'onset': 25, 'duration': 5, 'amplitude': 20,  'target': [L4E]},
+                             {'onset': 45, 'duration': 5, 'amplitude': 20,  'target': [L5E]},
+                             {'onset': 65, 'duration': 5, 'amplitude': 20,  'target': [L6E]}]
          }
 
     theta = create_theta(num_simulations, components=['NVC', 'LBR'], parameters=[['c1', 'c2', 'c3'],['V0t', 'V0t_p']])

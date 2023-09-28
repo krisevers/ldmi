@@ -80,7 +80,7 @@ def gen_input(U, target, dt, start, stop, amp, std):
             U[intervidx_U[0]:intervidx_U[1], target[i]] = max(INP)
             U[intervidx_U[0]:intervidx_U[0]+peakstd_U*3-1, target[i]] = INP[1:peakstd_U*3]
             U[intervidx_U[1]:intervidx_U[1]+peakstd_U*3-1, target[i]] = INP[peakstd_U*3+1:]
-            U[:, target[i]] = U[:, target[i]]*amp
+            U[intervidx_U[0]:intervidx_U[1]+peakstd_U*3-1, target[i]] = U[intervidx_U[0]:intervidx_U[1]+peakstd_U*3-1, target[i]]*amp
     else:
         U[intervidx_U[0]:intervidx_U[1], target] = max(INP)
         U[intervidx_U[0]:intervidx_U[0]+peakstd_U*3-1, target] = INP[1:peakstd_U*3]
