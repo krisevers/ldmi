@@ -11,7 +11,7 @@ from utils import get_N2K, gen_input, syn_to_neuro, gen_observables, create_thet
 Selection of parameter worker functions for DCM > NVC > LBR models
 """
 
-def worker(E, O, theta=None):
+def worker(E, O, theta=None, test=False):
     """
     Wrapper function for DCM, NVC and LBR models
 
@@ -51,9 +51,11 @@ def worker(E, O, theta=None):
     # simulate
     syn_signal = DMF_model.sim(E)    # [T, M]
 
+    syn_signal = np.maximum(syn_signal, 0)  # remove negative values
+
     # convert synaptic activity to neural response
     idx_baseline = int(1/DMF_model.P['dt'])  # ms
-    neuro = syn_to_neuro(syn_signal, E['K'], E_scale=20, I_scale=0, baseline=idx_baseline)  # [T, K]
+    neuro = syn_to_neuro(syn_signal, E['K'], E_scale=10, I_scale=0, baseline=idx_baseline)  # [T, K]
 
     # remove simulation up to fixed point (t < 1/dt)
     neuro = neuro[int(1/DMF_model.P['dt']):]
@@ -80,10 +82,13 @@ def worker(E, O, theta=None):
     lbr_ = lbr[::int(E['TR']/lbr_dt)]
 
     # TODO: downsample K depths to 3 voxels (i.e. to match fMRI resolution) by interpolation
-
-    # TODO: add optional obersevables
-    # X = gen_observables(lbr_, E, O={})
-    X = {'lbr': lbr_}
+    
+    if test:
+        X = {'syn_signal': syn_signal, 'neuro': neuro, 'cbf': cbf_, 'lbr': lbr_, 'lbrpial': lbrpial, 'Y': Y}
+        X_obs = gen_observables(lbr_, E, O={})
+        X.update(X_obs)
+    else:
+        X = gen_observables(lbr_, E, O={})
 
     return X
 
@@ -102,17 +107,22 @@ if __name__ == '__main__':
     values = []
     num_simulations = size
 
+    test = True
+
     # eperimental parameters (keep fixed across simulations)
     K = 12          # number of cortical depths
-    T_sim = 80     # simulation time
+    T_sim = 40      # simulation time
     L23E, L23I, L4E, L4I, L5E, L5I, L6E, L6I = 0, 1, 2, 3, 4, 5, 6, 7
+    nu = 15                                             # Hz
+    S_th = 902                                          # number of thalamic inputs
+    P_th = np.array([0.0983, 0.0619, 0.0512, 0.0196])   # connection probability thalamic inputs
     E = {'T': T_sim, 'TR': 2, 'K': K, 
-         'stimulations': 
-                            [{'onset': 5,  'duration': 5, 'amplitude': 20,  'target': [L23E]},
-                             {'onset': 25, 'duration': 5, 'amplitude': 20,  'target': [L4E]},
-                             {'onset': 45, 'duration': 5, 'amplitude': 20,  'target': [L5E]},
-                             {'onset': 65, 'duration': 5, 'amplitude': 20,  'target': [L6E]}]
-         }
+            'stimulations': 
+                               [{'onset': 5, 'duration': 10, 'amplitude': nu * S_th * P_th[0],  'target': [L4E]},
+                                {'onset': 5, 'duration': 10, 'amplitude': nu * S_th * P_th[1],  'target': [L4I]},
+                                {'onset': 5, 'duration': 10, 'amplitude': nu * S_th * P_th[2],  'target': [L6E]},
+                                {'onset': 5, 'duration': 10, 'amplitude': nu * S_th * P_th[3],  'target': [L6I]}]
+            }
 
     theta = create_theta(num_simulations, components=['NVC', 'LBR'], parameters=[['c1', 'c2', 'c3'],['V0t', 'V0t_p']])
 
@@ -124,7 +134,7 @@ if __name__ == '__main__':
     X = []
     for i in tqdm.tqdm(range(num_simulations_per_worker), disable=not rank==0):
         theta_i = worker_params[i]
-        X_i = worker(E, O={}, theta=theta_i)
+        X_i = worker(E, O={}, theta=theta_i, test=test)
         X_i.update(theta_i)
         X.append(X_i)
 
@@ -137,85 +147,54 @@ if __name__ == '__main__':
 
         import pylab as plt
         plt.figure()
-        plt.imshow(X[0]['lbr'].T, aspect='auto', interpolation='none')
+        vmin, vmax = np.min(X[0]['lbr']), np.max(X[0]['lbr'])
+        vall = np.max(np.abs([vmin, vmax]))
+        plt.imshow(X[0]['lbr'].T, aspect='auto', interpolation='nearest', cmap='PiYG', vmin=-vall, vmax=vall)
+        plt.xticks(np.linspace(0, int(T_sim/E['TR'])-1, 4), np.linspace(0, T_sim, 4).astype(int))
         plt.xlabel('time (TR)')
         plt.ylabel('cortical depth (K)')
         plt.colorbar()
-        plt.savefig('png/test/imshow_lbr_ex{}.png'.format(0))
+        plt.savefig('svg/imshow_lbr_ff.svg')
 
-        import IPython; IPython.embed()
+        # imshow the neuro signal
+        plt.figure()
+        vmin, vmax = np.min(X[0]['neuro']), np.max(X[0]['neuro'])
+        vall = np.max(np.abs([vmin, vmax]))
+        plt.imshow(X[0]['neuro'].T, aspect='auto', interpolation='none', cmap='Reds', vmin=vmin, vmax=vall)
+        plt.xlabel('time (TR)')
+        plt.ylabel('cortical depth (K)')
+        plt.colorbar()
+        plt.savefig('svg/imshow_neuro_ff.svg')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # if rank == 0:
-    #     model_name = 'DMF_test'
-
-    #     import pylab as plt
-    #     import matplotlib.colors as colors
-    #     import matplotlib.cbook as cbook
-    #     from matplotlib import cm
-
-    #     N2K, TH = get_N2K(K)
-    #     TH_, ind = np.unique(TH, return_index=True)
-    #     TH_ = TH_[np.argsort(ind)]
-
-    #     for tr in range(len(X)):
-    #         cm_neuro = plt.cm.Spectral(np.linspace(0, 1, K))
-    #         cm_cbf   = plt.cm.Spectral(np.linspace(0, 1, K))
-    #         cm_lbr   = plt.cm.Spectral(np.linspace(0, 1, K))
-    #         plt.figure(figsize=(10, 10))
-    #         plt.subplot(3, 1, 1)
-    #         for i in range(K):
-    #             plt.plot(X[tr]['neuro'][:,i], color=cm_neuro[i])
-    #         plt.subplot(3, 1, 2)
-    #         for i in range(K):
-    #             plt.plot(X[tr]['cbf'][:, i], color=cm_cbf[i])
-    #         plt.subplot(3, 1, 3)
-    #         for i in range(K):
-    #             plt.plot(X[tr]['lbr'][:, i], color=cm_lbr[i])
-    #         plt.savefig('png/test/plot_neuro_cbf_lbr_ex{}.png'.format(tr))
-
-    #         layers = ['L23', 'L4', 'L5', 'L6']
-    #         layer_pos = [2, 7, 11, 14]
-    #         plt.text(0, 2, layers[0], color='black', fontsize=20)
-    #         plt.text(0, 7, layers[1], color='black', fontsize=20)
-    #         plt.text(0, 11, layers[2], color='black', fontsize=20)
-    #         plt.text(0, 14, layers[3], color='black', fontsize=20)
-
-    #         plt.figure(figsize=(10, 10))
-    #         plt.subplot(3, 1, 1)
-    #         plt.imshow(X[tr]['neuro'].T, cmap='Spectral', aspect='auto', interpolation='none')
-    #         plt.colorbar()
-    #         for i in range(4):
-    #             plt.text(1/1e-4, layer_pos[i], layers[i], color='black')
-    #         plt.subplot(3, 1, 2)
-    #         plt.imshow(X[tr]['cbf'].T, cmap='Spectral', aspect='auto', interpolation='none')
-    #         plt.colorbar()
-    #         for i in range(4):
-    #             plt.text(1/1e-2, layer_pos[i], layers[i], color='black')
-    #         plt.subplot(3, 1, 3)
-    #         plt.imshow(X[tr]['lbr'].T, cmap='Spectral', aspect='auto', interpolation='none')
-    #         plt.colorbar()
-    #         for i in range(4):
-    #             plt.text(1/1e-2, layer_pos[i], layers[i], color='black')
-    #         plt.tight_layout()
-    #         plt.savefig('png/test/imshow_neuro_cbf_lbr_ex{}.png'.format(tr))
+        # plot peak of syn_signal
+        # plt.figure(figsize=(4, 4))
+        # plt.barh(y=np.arange(K), width=X[0]['syn_signal'][100000,:], color='#276419ff', lw=3)
+        # plt.yticks(np.arange(0, K, 4), np.arange(0, K, 4))
+        # plt.ylabel('cortical depth (K)')
+        # plt.xlabel('peak $I_{syn}$ [pA]')
+        # plt.gca().invert_yaxis()
+        # plt.savefig('svg/peak_syn.svg')
 
 
-        # import IPython
-        # IPython.embed()
+        # imshow the cbf signal
+        plt.figure()
+        vmin, vmax = np.min(X[0]['cbf']), np.max(X[0]['cbf'])
+        vall = np.max(np.abs([vmin, vmax]))
+        plt.imshow(X[0]['cbf'].T, aspect='auto', interpolation='none', cmap='PiYG', vmin=vmin, vmax=vall)
+        plt.xlabel('time (TR)')
+        plt.ylabel('cortical depth (K)')
+        plt.colorbar()
+        plt.savefig('svg/imshow_cbf_ff.svg')
+
+        # plot the peaks per layer
+        # plt.figure(figsize=(4, 4))
+        # plt.plot(X[0]['peak_Ampl'][0], np.arange(K), color='#276419ff', lw=3)
+        # plt.yticks(np.arange(0, K, 3), np.arange(0, K, 3))
+        # plt.ylim(0, K-1)
+        # plt.xlim(np.min(X[0]['peak_Ampl'][0]))
+        # plt.xlabel('peak amplitude')
+        # plt.ylabel('cortical depth (K)')
+        # plt.savefig('svg/plot_peak_Ampl_ff.svg')
+
+        if test:
+            import IPython; IPython.embed()

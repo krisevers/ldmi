@@ -85,7 +85,7 @@ def gen_input(U, target, dt, start, stop, amp, std):
         U[intervidx_U[0]:intervidx_U[1], target] = max(INP)
         U[intervidx_U[0]:intervidx_U[0]+peakstd_U*3-1, target] = INP[1:peakstd_U*3]
         U[intervidx_U[1]:intervidx_U[1]+peakstd_U*3-1, target] = INP[peakstd_U*3+1:]
-        U[:, target] = U[:, target]*amp
+        U[intervidx_U[0]:intervidx_U[1]+peakstd_U*3-1, target] = U[:, target]*amp
     return U
 
 def syn_to_neuro(syn, K, E_scale=1, I_scale=1, baseline=0):
@@ -112,21 +112,15 @@ def gen_observables(lbr, E, O):
     num_stimulations = len(E['stimulations'])
 
     if np.isnan(lbr).any(): # check for nan values
-        peak_Posi  = np.nan
         peak_Ampl  = np.nan
-        peak_Area  = np.nan
-        unde_Posi  = np.nan
         unde_Ampl  = np.nan
-        unde_Area  = np.nan
+        tota_Area  = np.nan
 
     else:
         # per stimulation and layer generate features
-        peak_Posi  = np.zeros((num_stimulations,  E['K']), dtype=int)
         peak_Ampl  = np.zeros((num_stimulations,  E['K']))
-        peak_Area  = np.zeros((num_stimulations,  E['K']))
-        unde_Posi  = np.zeros((num_stimulations,  E['K']), dtype=int)
         unde_Ampl  = np.zeros((num_stimulations,  E['K']))
-        unde_Area  = np.zeros((num_stimulations,  E['K']))
+        tota_Area  = np.zeros((num_stimulations,  E['K']))
 
         for s in range(num_stimulations):
             for k in range(num_layers):
@@ -135,19 +129,13 @@ def gen_observables(lbr, E, O):
                 aft_idx   = 2*E['TR']                                                      # after stimulus period in number of volumes
                 end_idx   = onset_idx + dur_idx + aft_idx                                  # end time in volume index
 
-                peak_Ampl[s, k] = np.max(lbr[onset_idx:end_idx, k])                                     # response peak amplitude
-                peak_Posi[s, k] = int(np.where(lbr[onset_idx:end_idx, k] == peak_Ampl[k])[0][0])        # response peak latency
-                peak_Area[s, k] = np.sum(lbr[lbr[onset_idx:end_idx, k] > 0, k])                         # response peak area
-                unde_Ampl[s, k] = np.min(lbr[peak_Posi[k]:end_idx, k])                                  # undershoot amplitude
-                unde_Posi[s, k] = int(np.where(lbr[onset_idx:end_idx, k] == unde_Ampl[k])[0][0])        # undershoot latency
-                unde_Area[s, k] = np.sum(lbr[lbr[onset_idx:end_idx, k] < 0, k])                         # undershoot area
+                peak_Ampl[s, k] = np.max(lbr[onset_idx:end_idx, k])                        # response peak amplitude
+                unde_Ampl[s, k] = np.min(lbr[onset_idx:end_idx, k])                        # undershoot amplitude
+                tota_Area[s, k] = np.sum(lbr[onset_idx:end_idx, k]) * E['TR']              # total area under the curve
 
-    return {'peak_Posi':  peak_Posi, 
-            'peak_Ampl':  peak_Ampl, 
-            'peak_Area':  peak_Area, 
-            'unde_Posi':  unde_Posi, 
-            'unde_Ampl':  unde_Ampl, 
-            'unde_Area':  unde_Area, 
+    return {'peak_Ampl':  peak_Ampl, 
+            'unde_Ampl':  unde_Ampl,
+            'tota_Area':  tota_Area
             }
 
 def create_theta(num_simulations, components=['DCM', 'NVC', 'LBR'], parameters=[[],[],[]], path=None, info=False):
@@ -200,15 +188,77 @@ def create_theta(num_simulations, components=['DCM', 'NVC', 'LBR'], parameters=[
 
     return theta
 
-if __name__=="__main__":
 
-    import pylab as plt
+# tools for visualization
+import pylab as plt
 
-    K = 30
+def pairplot(samples, labels=None, figsize=(10, 10)):
+    """
+    Create a pairplot from samples.
+    """
+    samples = np.array(samples)
 
-    N2K = get_N2K(K)
+    num_samples, num_dims = samples.shape
 
-    plt.figure()
-    plt.imshow(N2K, aspect='auto', cmap='hot')
-    plt.savefig('png/N2K_K30.png')
-    plt.close('all')
+    if (labels is None):
+        labels = [r"$\theta_{}$".format(i) for i in range(num_dims)]
+
+    fig, ax = plt.subplots(num_dims, num_dims, figsize=figsize)
+    plt.suptitle(r'p($\theta | x$)', fontsize=20)
+    for i in range(num_dims):
+        for j in range(num_dims):
+            if (i == j):
+                ax[i, j].hist(samples[:, i], bins=50, density=True, histtype="step", color="black")
+                ax[i, j].set_xlabel(labels[j])
+                ax[i, j].set_ylabel(labels[i])
+                ax[i, j].set_yticks([])
+            if (i < j):
+                ax[i, j].hist2d(samples[:, j], samples[:, i], bins=50, cmap="Reds")
+                ax[i, j].set_xlabel(labels[j])
+                ax[i, j].set_ylabel(labels[i])
+                ax[i, j].set_xticks([])
+                ax[i, j].set_yticks([])
+            if (i > j):
+                ax[i, j].axis("off")
+
+    return fig, ax
+
+def marginal_correlation(samples, labels=None, figsize=(10, 10)):
+    """
+    Create a marginal correlation matrix
+    """
+
+    num_samples, num_dims = samples.shape
+
+    corr_matrix_marginal = np.corrcoef(samples.T)
+
+    if (labels is None):
+        labels = [r"$\theta_{}$".format(i) for i in range(num_dims)]
+
+    fig, ax = plt.subplots(1, 1, figsize=figsize)
+    plt.suptitle(r'p($\theta | x$)', fontsize=20)
+    im = plt.imshow(corr_matrix_marginal, clim=[-1, 1], cmap="PiYG")
+    ax.set_xticks(np.arange(num_dims))
+    ax.set_yticks(np.arange(num_dims))
+    ax.set_xticklabels(labels)
+    ax.set_yticklabels(labels)
+    ax.tick_params(axis='both', which='major', labelsize=10)
+    ax.tick_params(axis='both', which='minor', labelsize=10)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+    im = plt.imshow(corr_matrix_marginal, clim=[-1, 1], cmap="PiYG")
+    _ = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+
+    return fig, ax
+
+def sensitivity_analysis(posterior, x_o, theta_project):
+    """
+    Posterior sensitivity analysis on posterior samples
+    """
+    from sbi.analysis import ActiveSubspace
+
+    sensitivity = ActiveSubspace(posterior.set_default_x(x_o))
+    e_vals, e_vecs = sensitivity.find_directions(posterior_log_prob_as_property=True)
+    projected_data = sensitivity.project(theta_project, num_dimensions=1)
+
+    

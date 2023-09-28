@@ -5,7 +5,7 @@
                     "upper" : 1.0
                 },
                 "distribution" : "uniform",
-                "default" : 0.02
+                "default" : 0.0
             },
             "tau_s": {
                 "bounds" : {
