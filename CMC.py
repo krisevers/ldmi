@@ -1,76 +1,68 @@
 import numpy as np
 import pylab as plt
 
+import IPython
+
 """
 Implementation of the canonical microcircuit (CMC) model of the neocortex.
 """
 
-tau = [256, 128, 16, 32]
-
 G = np.array([[-8, -4, -4,  0],
               [ 4, -8, -2,  0],
-              [ 4,  2, -4,  2],
-              [ 0,  1, -2, -4]])
+              [ 4,  2, -4, -2],
+              [ 0,  1, -2, -4]], dtype=np.float128)
+G *= 200
 
-# states
-P = np.zeros(4)
-Q = np.zeros(4)
-R = np.zeros(4)
+C = np.array([ 1,  1,  1,  1], dtype=np.float128)
+C *= 200
 
-def f(X, dt, T):
-    """implement CMC differential equations (from Wei et al. (2020))"""
-    global P, Q, R
-    P = X[:4]
-    Q = X[4:8]
-    R = X[8:12]
+k = np.array([256, 128, 16, 32], dtype=np.float128)
 
-    dP = np.zeros(4)
-    dQ = np.zeros(4)
-    dR = np.zeros(4)
+# state variables (ss, sp, ii, dp)
+v = np.zeros(4, dtype=np.float128)
+r = np.zeros(4, dtype=np.float128)
 
-    for i in range(4):
-        dP[i] = (1/T[i]) * (-P[i] + np.sum(G[i,:] * R))
-        dQ[i] = (1/T[i]) * (-Q[i] + np.sum(G[i,:] * P))
-        dR[i] = (1/T[i]) * (-R[i] + np.sum(G[i,:] * Q))
+dt = np.float128(0.001) # seconds
+T  = np.float128(35)    # seconds
 
-    return np.concatenate((dP, dQ, dR))
+u = np.zeros((int(T/dt), 4))
+u[int(5/dt):int(6/dt), 0] = np.float128(1)   
 
-def simulate(X0, dt, T, tau):
-    """simulate CMC model"""
-    X = np.zeros((int(T/dt), 12))
-    X[0,:] = X0
-    for i in range(1, int(T/dt)):
-        X[i,:] = X[i-1,:] + dt * f(X[i-1,:], dt, tau)
-    return X
+# save the state variables
+V = np.zeros((int(T/dt), 4))
+R = np.zeros((int(T/dt), 4))
 
-def plot(X, dt, T):
-    """plot CMC model"""
-    t = np.arange(0, T, dt)
-    plt.figure()
-    plt.plot(t, X[:,0], label='P_L23E')
-    plt.plot(t, X[:,1], label='P_L23I')
-    plt.plot(t, X[:,2], label='P_L4E')
-    plt.plot(t, X[:,3], label='P_L4I')
-    plt.plot(t, X[:,4], label='Q_L23E')
-    plt.plot(t, X[:,5], label='Q_L23I')
-    plt.plot(t, X[:,6], label='Q_L4E')
-    plt.plot(t, X[:,7], label='Q_L4I')
-    plt.plot(t, X[:,8], label='R_L23E')
-    plt.plot(t, X[:,9], label='R_L23I')
-    plt.plot(t, X[:,10], label='R_L4E')
-    plt.plot(t, X[:,11], label='R_L4I')
-    plt.legend()
-    plt.show()
+def sigmoid(x, r=2/3):
+    return 1 / (1 + np.exp(-r*x))
 
-if __name__ == '__main__':
+for t in range(int(T/dt)):
+    # euler
+    v_ = sigmoid(v)
+    v_ = v_ - sigmoid(0)
 
-    dt = 0.01
-    T = 1000
-    X0 = np.zeros(12)
-    X0[0] = 1
-    X0[1] = 1
-    X0[2] = 1
-    X0[3] = 1
+    p = C * u[t,:]
+    q = np.dot(G, v_)
 
-    X = simulate(X0, dt, T, tau)
-    plot(X, dt, T)
+    v = k * (r - 2*v - v)
+    r = q + p
+
+    V[t,:] = v
+    R[t,:] = r
+
+# plot the results
+plt.figure()
+plt.plot(V[:,0], label='ss')
+plt.plot(V[:,1], label='sp')
+plt.plot(V[:,2], label='ii')
+plt.plot(V[:,3], label='dp')
+plt.legend()
+
+plt.figure()
+plt.plot(R[:,0], label='ss')
+plt.plot(R[:,1], label='sp')
+plt.plot(R[:,2], label='ii')
+plt.plot(R[:,3], label='dp')
+plt.legend()
+
+plt.show()
+
