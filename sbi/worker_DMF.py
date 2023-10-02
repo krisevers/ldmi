@@ -158,9 +158,7 @@ if __name__ == '__main__':
 
         # imshow the neuro signal
         plt.figure()
-        vmin, vmax = np.min(X[0]['neuro']), np.max(X[0]['neuro'])
-        vall = np.max(np.abs([vmin, vmax]))
-        plt.imshow(X[0]['neuro'].T, aspect='auto', interpolation='none', cmap='Reds', vmin=vmin, vmax=vall)
+        plt.imshow(X[0]['neuro'].T, aspect='auto', interpolation='none', cmap='Reds')
         plt.xlabel('time (TR)')
         plt.ylabel('cortical depth (K)')
         plt.colorbar()
