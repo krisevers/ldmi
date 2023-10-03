@@ -94,8 +94,8 @@ if __name__=="__main__":
                     device="cpu",
                     density_estimator="maf")
 
-    obs_theta = np.array([0.6, 1.5, 0.6, 2, 4, 0.32, 0.4, 4, 0.0463, .191, 126.3, 0.028])
-    obs_x = np.array([ 7.147, 5.40525194, 18.776, -0.28197114, 1.327, -0.0698291])
+    obs_theta = np.array([0.6, 1.5, 0.6, 2, 4, 0.32, 0.4, 4, 0.0463, 0.191, 126.3, 0.028])
+    obs_x = np.array([ 7.147,       5.40525194, 18.776,      -0.28197114,  1.327,      -0.0698291 ])
     num_samples = 10000
 
     posterior.set_default_x(obs_x)

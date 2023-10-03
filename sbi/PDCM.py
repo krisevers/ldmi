@@ -185,4 +185,7 @@ if __name__ == '__main__':
     plt.savefig('svg/PDCM_stats.svg')
     plt.show()
 
+    print(np.array(stats))
+    print(np.array(theta.values()))
+
     import IPython; IPython.embed()
