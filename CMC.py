@@ -14,13 +14,14 @@ G = np.array([[-8, -4, -4,  0],
 G *= 200
 
 C = np.array([ 1,  1,  1,  1], dtype=np.float128)
-C *= 200
 
-k = np.array([256, 128, 16, 32], dtype=np.float128)
+k   = np.array([256, 128, 16, 32], dtype=np.float128)
+tau = np.array([2, 2, 16, 28], dtype=np.float128)
+tau /= 1000
 
 # state variables (ss, sp, ii, dp)
-v = np.zeros(4, dtype=np.float128)
-r = np.zeros(4, dtype=np.float128)
+v = np.zeros(4, dtype=np.float128)  # voltage
+r = np.zeros(4, dtype=np.float128)  # conductance
 
 dt = np.float128(0.001) # seconds
 T  = np.float128(35)    # seconds
@@ -32,22 +33,21 @@ u[int(5/dt):int(6/dt), 0] = np.float128(1)
 V = np.zeros((int(T/dt), 4))
 R = np.zeros((int(T/dt), 4))
 
-def sigmoid(x, r=2/3):
+def sigmoid(x, r=1):
     return 1 / (1 + np.exp(-r*x))
+
 
 for t in range(int(T/dt)):
     # euler
-    v_ = sigmoid(v)
-    v_ = v_ - sigmoid(0)
+    F = 1 / (1 + np.exp(-1 * v + 0))
+    S = F - 1/(1 + np.exp(0))
 
-    p = C * u[t,:]
-    q = np.dot(G, v_)
-
-    v = k * (r - 2*v - v)
-    r = q + p
-
+    U = np.dot(G, S) + C * u[t,:]
+    f = (U - 2*r - v / tau) / tau
+    
     V[t,:] = v
     R[t,:] = r
+
 
 # plot the results
 plt.figure()
@@ -66,3 +66,15 @@ plt.legend()
 
 plt.show()
 
+
+# other implementation of CMC
+
+# tau = np.array([2, 2, 16, 18])
+
+# G = np.array([[-800, -800, -1600,    0],
+#               [ 800, -800,  -800,    0],
+#               [ 800,  400,  -800,  400],
+#               [   0,    0,  -400, -400]], dtype=np.float128)
+
+# vdd = np.array([0, 0, 0, 0], dtype=np.float128)
+# vd  = np.array([0, 0, 0, 0], dtype=np.float128)
