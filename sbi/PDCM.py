@@ -37,8 +37,8 @@ def worker(theta):
     F = NVC_model.sim(X[:, 0], E)
 
     # hemodynamic model (balloon model Buxton et al., 1998)
-    v     = 0    # blood volume
-    q     = 0    # deoxyhemoglobin content
+    v     = 1    # blood volume
+    q     = 1    # deoxyhemoglobin content
     E_f   = 0    # oxygen extraction fraction
     f_out = 0    # outflow of blood
 
@@ -62,12 +62,12 @@ def worker(theta):
         E_f = 1 - (1 - E_0)**(1 / F[t])
 
         v_dot = dt * ((F[t] - f_out) / tau_mtt)
-        v = v + v_dot
-
-        q_dot = dt * ((F[t] * (E_f / E_0) - f_out * (q / v))/ tau_mtt)
-        q = q + q_dot
+        q_dot = dt * ((F[t] * (E_f / E_0) - f_out * (q / v)) / tau_mtt)
 
         f_out = v ** (1 / alpha) + tau_vs * v_dot
+
+        q = q + q_dot
+        v = v + v_dot
 
         V[t] = v
         Q[t] = q

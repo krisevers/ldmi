@@ -1,88 +1,123 @@
 import numpy as np
 
-def balloon_windkessel(neural_activity, dt=0.001, 
-                       tau=0.98, alpha=0.32, 
-                       E_0=0.34, V_0=0.02, 
-                       k1=3, k2=1, k3=1, 
-                       tau_s=2, tau_f=1.5):
-    """
-    Simulates the BOLD response using the Balloon-Windkessel model.
-    
-    :param neural_activity: array-like, the neural activity over time
-    :param dt: float, the time step
-    :param tau: float, the hemodynamic transit time
-    :param alpha: float, the Grubb's exponent
-    :param E_0: float, the resting oxygen extraction fraction
-    :param V_0: float, the resting blood volume fraction
-    :param k1, k2, k3: floats, the BOLD signal coefficients
-    :param tau_s: float, the time constant for the signal decay
-    :param tau_f: float, the time constant for the signal rise
-    
-    :return: array-like, the BOLD response over time
-    """
-    n_time_points = len(neural_activity)
-    s = np.zeros(n_time_points, dtype=np.float128)
-    f = np.zeros(n_time_points, dtype=np.float128)
-    v = np.ones(n_time_points, dtype=np.float128) * V_0
-    q = np.ones(n_time_points, dtype=np.float128) * V_0 * E_0
-    bold = np.zeros(n_time_points, dtype=np.float128)
-    
-    for t in range(1, n_time_points):
-        ds = dt * (-s[t-1]/tau_s + neural_activity[t-1])                                                # neural activity
-        df = dt * (s[t-1] - f[t-1])/tau_f                                                               # vasodilatory signal
-        dv = dt * ((f[t-1] - v[t-1]**(1/alpha))/tau)                                                    # blood volume
-        dq = dt * ((f[t-1] * (1 - (1 - E_0)**(1/f[t-1])) - (v[t-1]**(1 - alpha) * q[t-1])/v[t-1])/tau)  # deoxyhemoglobin
-        
-        s[t] = s[t-1] + ds
-        f[t] = f[t-1] + df
-        v[t] = v[t-1] + dv
-        q[t] = q[t-1] + dq
-        
-        bold[t] = v[t] * (k1 + k2) - (k2 / k3) * q[t]
-        
-    return bold
+import numpy as np
 
-if __name__ == '__main__':
+def BWM(theta):
 
-    # Example usage:
-    import pylab as plt
-
-    t_sim = 60
+    t_sim = 50
     dt = 0.001
 
     T = int(t_sim/dt)
 
-    U = np.zeros((int(t_sim/dt), 2))
-    U[int(10/dt):int(20/dt), 0] = 1
+    # P-DCM
+    U = np.zeros((int(t_sim/dt)))
+    U[int(10/dt):int(15/dt)] = 1
 
-    _sigma   = -3
-    _mu      = -1.5
-    _lambda_ = 0.2
-    W = np.array([[_sigma,    _mu     ],           # within layer connectivity
-                  [_lambda_, -_lambda_]])
-    
-    x = np.zeros(2)
-    X = np.zeros((T, 2))
+    X = np.zeros((T, 1))
+    F = np.zeros((T, 1))
+
+    xinflow = 0
+    xvaso   = 0
+    yinflow = 0
+    yvaso   = 0
+
     for t in range(T):
-        x_dot = dt * (np.dot(W, x) + U[t])
-        x = x + x_dot
-        X[t] = x
+        X[t] = X[t] + dt * (-X[t] + U[t])      # neural activity
 
+        xinflow = np.exp(xinflow)
+        yvaso   = yvaso + dt * (X[t] - theta['c1'] * xvaso)   # vasoactive signal
+        df_a    = theta['c2'] * xvaso - theta['c3'] * (xinflow - 1)    # inflow
+        yinflow = yinflow + dt * (df_a / xinflow)
+        xvaso   = yvaso
+        xinflow = yinflow
 
-    # neurovascular coupling (NVC)
-    c1 = 0.6
-    c2 = 1.5
-    c3 = 0.6
+        F[t] = np.exp(yinflow)
 
+    # hemodynamic model (balloon model Buxton et al., 1998 and some modifications according to Havlicek et al., 2015)
+    v     = 1    # blood volume
+    q     = 1    # deoxyhemoglobin content
+    E_f   = 0    # oxygen extraction fraction
+    f_out = 0    # outflow of blood
 
-    # Get the BOLD response
-    bold_response = balloon_windkessel(X[:, 0])
+    tau_mtt = theta['tau_mtt']
+    tau_vs  = theta['tau_vs']
+    alpha   = theta['alpha']
+    E_0     = theta['E_0']
+    V_0     = theta['V_0']
 
-    # Plot the results
-    plt.figure(figsize=(10, 5))
-    plt.plot(X, label='Neural Activity')
-    plt.plot(bold_response, label='BOLD Response')
+    eps    = theta['eps']
+    rho_0  = theta['rho_0']
+    nu_0   = theta['nu_0']
+    TE     = theta['TE']
+
+    V = np.zeros((T, 1))
+    Q = np.zeros((T, 1))
+
+    BOLD = np.zeros((T, 1))
+
+    for t in range(T):
+        E_f = 1 - (1 - E_0)**(1 / F[t])                                     # oxygen extraction fraction
+
+        v_dot = dt * ((F[t] - f_out) / tau_mtt)                             # blood volume
+        q_dot = dt * ((F[t] * (E_f / E_0) - f_out * (q / v)) / tau_mtt)     # deoxyhemoglobin content
+
+        f_out = v ** (1 / alpha) + tau_vs * v_dot                           # outflow of blood
+
+        q = q + q_dot
+        v = v + v_dot
+
+        V[t] = v
+        Q[t] = q
+
+        k1 = 4.3 * nu_0  * E_0 * TE
+        k2 = eps * rho_0 * E_0 * TE
+        k3 = 1 - eps
+
+        BOLD[t] = V_0 * (k1*(1 - Q[t]) + k2*(1 - Q[t]/V[t]) + k3*(1 - V[t]))    # BOLD signal
+
+    # remove initial transient
+    U = U[int(6/dt):]
+    F = F[int(6/dt):]
+    V = V[int(6/dt):]
+    Q = Q[int(6/dt):]
+    BOLD = BOLD[6000:]
+
+    return U, F, V, Q, BOLD
+
+if __name__ == '__main__':
+
+    import pylab as plt
+
+    theta = {'c1': 0.6, 'c2': 1.5, 'c3': 0.6,
+             'tau_mtt': 2, 'tau_vs': 4, 'alpha': 0.32, 'E_0': 0.4, 'V_0': 4, 'eps': 0.0463, 'rho_0': .191, 'nu_0': 126.3, 'TE': 0.028}
+    U, F, V, Q, BOLD = BWM(theta)
+
+    plt.figure(figsize=(5, 10))
+    plt.subplot(5, 1, 1)
+    plt.title('Stimulus')
+    plt.plot(U, lw=3, c='black')
+    plt.xticks([])
+    plt.xlim(0, U.shape[0])
+    plt.subplot(5, 1, 2)
+    plt.title('Cerebral Blood Flow')
+    plt.plot(F, lw=3, c='black')
+    plt.xticks([])
+    plt.xlim(0, F.shape[0])
+    plt.subplot(5, 1, 3)
+    plt.title('Cerebral Blood Volume')
+    plt.plot(V, lw=3, c='black')
+    plt.xticks([])
+    plt.xlim(0, V.shape[0])
+    plt.subplot(5, 1, 4)
+    plt.title('Deoxyhemoglobin Content')
+    plt.plot(Q, lw=3, c='black')
+    plt.xticks([])
+    plt.xlim(0, Q.shape[0])
+    plt.subplot(5, 1, 5)
+    plt.title('BOLD Signal')
+    plt.plot(BOLD, lw=3, c='black')
+    plt.xlim(0, BOLD.shape[0])
+    plt.xticks(np.linspace(0, BOLD.shape[0], 6), np.round(np.linspace(6, 50, 6), 0))
     plt.xlabel('Time (s)')
-    plt.ylabel('Amplitude')
-    plt.legend()
+    plt.tight_layout()
     plt.show()
