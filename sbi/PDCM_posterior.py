@@ -101,10 +101,34 @@ if __name__=="__main__":
     posterior.set_default_x(obs_x)
     posterior_samples = posterior.sample((num_samples,))
 
+
+
     from view import pairplot, marginal_correlation, marginal
+
+    keys = np.array([r'$c_{1}$', r'$c_{2}$', r'$c_{3}$', r'$\tau_{mtt}$', r'$\tau_{vs}$', 
+                     r'$\alpha$', r'$E_0$', r'$V_0$', r'$\epsilon$', r'$\rho_0$', 
+                     r'$\nu_0$', r'$TE$'])
+    
+    limits = np.array([
+        [0.3,       0.9   ],
+        [1,         2     ],
+        [0.3,       0.9   ],
+        [1,         5     ],
+        [0.1,      30     ],
+        [0.1,       0.5   ],
+        [0.1,       0.8   ],
+        [1,        10     ],
+        [0.3390,    0.3967],
+        [10,     1000     ],
+        [40,      440     ],
+        [0.015,     0.040 ],
+    ])
+
+
     fig, ax = pairplot(posterior_samples, labels=keys)
     plt.savefig('svg/pairplot.svg', dpi=300)
-    fig, ax = marginal_correlation(posterior_samples, labels=keys)
+
+    fig, ax = marginal_correlation(posterior_samples, labels=keys, figsize=(10, 10))
     plt.savefig('svg/marginal_correlation.svg', dpi=300)
 
     # NVC
@@ -114,10 +138,9 @@ if __name__=="__main__":
     fig, ax = pairplot(posterior_samples[:, 3:], labels=keys[3:])
     plt.savefig('svg/pairplot_BOLD.svg', dpi=300)
 
-    fig, ax = marginal(posterior_samples, labels=keys)
+    fig, ax = marginal(posterior_samples, labels=keys, limits=limits, figsize=(8, 12))
     for i in range(len(keys)):
         ax[i].axvline(obs_theta[i], color='r', linestyle='--')
     plt.savefig('svg/marginal.svg', dpi=300)
-
 
     IPython.embed()

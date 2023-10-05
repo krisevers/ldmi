@@ -30,7 +30,7 @@ def pairplot(samples, labels=None, figsize=(10, 10)):
 
     return fig, ax
 
-def marginal(samples, labels=None, range=None, figsize=(8, 12)):
+def marginal(samples, labels=None, limits=None, figsize=(8, 12)):
     """
     Create a marginal plot from samples.
     """
@@ -39,11 +39,13 @@ def marginal(samples, labels=None, range=None, figsize=(8, 12)):
     if (labels is None):
         labels = [r"$\theta_{}$".format(i) for i in range(num_dims)]
 
-    # TODO: add range
     fig, ax = plt.subplots(num_dims, 1, figsize=figsize)
     plt.suptitle(r'p($\theta | x$)', fontsize=20)
     for i in range(num_dims):
-        ax[i].hist(np.array(samples[:, i]), bins=50, density=True, histtype="step", color="black")
+        if limits is None:
+            ax[i].hist(np.array(samples[:, i]), bins=50, density=True, histtype="step", color="black")
+        else:   
+            ax[i].hist(np.array(samples[:, i]), bins=50, density=True, histtype="step", color="black", range=limits[i])
         ax[i].set_xlabel(labels[i])
         ax[i].set_ylabel(r"$p(\theta_{} | x)$".format({i}))
         ax[i].set_yticks([])
