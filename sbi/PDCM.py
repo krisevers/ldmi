@@ -100,9 +100,7 @@ def gen_stats(BOLD, dt):
             'skew': np.nan,
             'kurt': np.nan,
             'max_val': np.nan,
-            'min_val': np.nan,
             'max_pos': np.nan,
-            'min_pos': np.nan,
             'max_slope': np.nan,
             'min_slope': np.nan,
             'max_slope_pos': np.nan,
@@ -120,13 +118,21 @@ def gen_stats(BOLD, dt):
         skew = np.mean((BOLD - mean)**3) / std**3
         kurt = np.mean((BOLD - mean)**4) / std**4
 
-
-        # find max and min values
+        # find max values
         max_val = np.max(BOLD)
-        min_val = np.min(BOLD)
+        max_pos = np.argmax(BOLD)
 
-        max_pos = np.argmax(BOLD) * dt
-        min_pos = np.argmin(BOLD) * dt
+        # time to minimum after peak
+        min_pos_as = np.argmin(BOLD[max_pos:])
+        tta = (min_pos_as - max_pos) * dt
+
+        # time to mimimum before peak
+        min_pos_bs = np.argmin(BOLD[:max_pos])
+        ttb = (max_pos - min_pos_bs) * dt
+
+        max_pos     = max_pos * dt
+        min_pos_as  = min_pos_as * dt
+        min_pos_bs  = min_pos_bs * dt 
 
         # find max and min slopes
         dBOLD = np.diff(BOLD)
@@ -144,15 +150,16 @@ def gen_stats(BOLD, dt):
 
         ratio_area = positive_area / (negative_area + positive_area)
 
+        # find peak-to-peak amplitude
+        tts = max_slope_pos - min_slope_pos
+
         stats = {
             'mean': mean,
             'std': std,
             'skew': skew,
             'kurt': kurt,
             'max_val': max_val,
-            'min_val': min_val,
             'max_pos': max_pos,
-            'min_pos': min_pos,
             'max_slope': max_slope,
             'min_slope': min_slope,
             'max_slope_pos': max_slope_pos,
@@ -160,7 +167,9 @@ def gen_stats(BOLD, dt):
             'positive_area': positive_area,
             'negative_area': negative_area,
             'ratio_area': ratio_area,
-
+            'tts': tts,
+            'tta': tta,
+            'ttb': ttb,
         }
 
         return stats
@@ -176,37 +185,37 @@ if __name__ == '__main__':
     plt.figure(figsize=(5, 10))
     plt.subplot(6, 1, 1)
     plt.title('Stimulus')
-    plt.plot(U[:, 0], lw=3, c='black')
+    plt.plot(U[:, 0], lw=2, c='black')
     plt.xticks([])
     plt.xlim(0, U.shape[0])
     plt.subplot(6, 1, 2)
     plt.title('Neuronal Response')
-    plt.plot(X[:, 0], lw=3, c='black')
+    plt.plot(X[:, 0], lw=2, c='black')
     plt.xticks([])
     plt.xlim(0, X.shape[0])
     plt.subplot(6, 1, 3)
     plt.title('Cerebral Blood Flow')
-    plt.plot(F, lw=3, c='black')
+    plt.plot(F, lw=2, c='black')
     plt.xticks([])
     plt.xlim(0, F.shape[0])
     plt.subplot(6, 1, 4)
     plt.title('Cerebral Blood Volume')
-    plt.plot(V, lw=3, c='black')
+    plt.plot(V, lw=2, c='black')
     plt.xticks([])
     plt.xlim(0, V.shape[0])
     plt.subplot(6, 1, 5)
     plt.title('Deoxyhemoglobin Content')
-    plt.plot(Q, lw=3, c='black')
+    plt.plot(Q, lw=2, c='black')
     plt.xticks([])
     plt.xlim(0, Q.shape[0])
     plt.subplot(6, 1, 6)
     plt.title('BOLD Signal')
-    plt.plot(BOLD, lw=3, c='black')
+    plt.plot(BOLD, lw=2, c='black')
     plt.xlim(0, BOLD.shape[0])
-    plt.xticks(np.linspace(0, BOLD.shape[0], 6), np.round(np.linspace(6, 50, 6), 0))
+    plt.xticks(np.linspace(0, BOLD.shape[0], 6), np.round(np.linspace(0, 40, 6), 0))
     plt.xlabel('Time (s)')
     plt.tight_layout()
-    plt.savefig('svg/PDCM_timeseries.svg')
+    plt.savefig('pdf/PDCM_timeseries.pdf')
     plt.show()
 
     print(np.array(stats.values()))

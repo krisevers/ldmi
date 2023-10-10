@@ -64,7 +64,7 @@ if __name__=="__main__":
 
     num_simulations = len(X)
 
-    stats = np.empty((num_simulations, 15))
+    stats = np.empty((num_simulations, 16))
     theta = np.empty((num_simulations, 12))
     keys  = np.array(list(X[0]['theta'].keys()))
 
@@ -90,7 +90,7 @@ if __name__=="__main__":
     posterior = train(num_simulations,
                     stats,
                     theta,
-                    num_threads=1,
+                    num_threads=8,
                     method="SNPE",
                     device="cpu",
                     density_estimator="maf")
