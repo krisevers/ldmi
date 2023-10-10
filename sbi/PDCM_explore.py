@@ -36,11 +36,11 @@ theta = np.transpose([
     np.random.uniform(0.1,    30,   size=args.num_simulations),  # tau_vs
     np.random.uniform(.1,    .5,    size=args.num_simulations),  # alpha
     np.random.uniform(.1,    .8,    size=args.num_simulations),  # E_0
-    np.random.uniform(1,      10,   size=args.num_simulations),  # V_0
-    np.random.uniform(.3390, .3967, size=args.num_simulations),  # eps
-    np.random.uniform(10,     1000, size=args.num_simulations),  # rho_0
+    np.random.uniform( 1,     100,  size=args.num_simulations),  # V_0
+    np.random.uniform(.0006,  60,   size=args.num_simulations),  # eps
+    np.random.uniform(10,     2000, size=args.num_simulations),  # rho_0
     np.random.uniform(40,     440,  size=args.num_simulations),  # nu_0
-    np.random.uniform(.015,  .040,  size=args.num_simulations),  # TE
+    np.random.uniform( .001, .040,  size=args.num_simulations),  # TE
 ])
 
 params_per_worker = np.array_split(theta, comm.Get_size())

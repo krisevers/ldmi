@@ -104,39 +104,6 @@ def syn_to_neuro(syn, K, E_scale=1, I_scale=1, baseline=0):
     
     return neuro
 
-def gen_observables(lbr, E, O):
-    
-    num_volumes = np.shape(lbr)[0]
-    num_layers  = np.shape(lbr)[1]
-
-    num_stimulations = len(E['stimulations'])
-
-    if np.isnan(lbr).any(): # check for nan values
-        peak_Ampl  = np.nan
-        unde_Ampl  = np.nan
-        tota_Area  = np.nan
-
-    else:
-        # per stimulation and layer generate features
-        peak_Ampl  = np.zeros((num_stimulations,  E['K']))
-        unde_Ampl  = np.zeros((num_stimulations,  E['K']))
-        tota_Area  = np.zeros((num_stimulations,  E['K']))
-
-        for s in range(num_stimulations):
-            for k in range(num_layers):
-                onset_idx = int(np.floor(E['stimulations'][s]['onset']/E['TR']))           # onset time in volume index
-                dur_idx   = int(np.floor(E['stimulations'][s]['duration']/E['TR']))        # duration in number of volumes
-                aft_idx   = 2*E['TR']                                                      # after stimulus period in number of volumes
-                end_idx   = onset_idx + dur_idx + aft_idx                                  # end time in volume index
-
-                peak_Ampl[s, k] = np.max(lbr[onset_idx:end_idx, k])                        # response peak amplitude
-                unde_Ampl[s, k] = np.min(lbr[onset_idx:end_idx, k])                        # undershoot amplitude
-                tota_Area[s, k] = np.sum(lbr[onset_idx:end_idx, k]) * E['TR']              # total area under the curve
-
-    return {'peak_Ampl':  peak_Ampl, 
-            'unde_Ampl':  unde_Ampl,
-            'tota_Area':  tota_Area
-            }
 
 def create_theta(num_simulations, components=['DCM', 'NVC', 'LBR'], parameters=[[],[],[]], path=None, info=False):
     """

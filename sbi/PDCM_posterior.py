@@ -51,11 +51,9 @@ def infer(obs_stats,
 
 if __name__=="__main__":
 
-    import IPython
-
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--path', default='data/PDCM', help='Set path to obtain data')
+    parser.add_argument('-p', '--path', default='data', help='Set path to obtain data')
 
     args = parser.parse_args()
 
@@ -66,12 +64,12 @@ if __name__=="__main__":
 
     num_simulations = len(X)
 
-    stats = np.empty((num_simulations, 6))
+    stats = np.empty((num_simulations, 15))
     theta = np.empty((num_simulations, 12))
     keys  = np.array(list(X[0]['theta'].keys()))
 
     for i in range(num_simulations):
-        stats[i] = X[i]['stats']
+        stats[i] = np.array(list(X[i]['stats'].values()))
         theta[i] = np.array(list(X[i]['theta'].values()))
 
     theta = np.asarray(theta)
@@ -82,9 +80,12 @@ if __name__=="__main__":
     idx = np.argwhere(np.isnan(stats))
     stats = np.delete(stats, idx, axis=0)
     theta = np.delete(theta, idx, axis=0)
-
+    print("Removed {} simulations with NaNs".format(len(idx)))
+    
     theta = torch.from_numpy(theta).float()
     stats = torch.from_numpy(stats).float()
+
+    print("Training posterior on {} simulations".format(num_simulations))
 
     posterior = train(num_simulations,
                     stats,
@@ -93,54 +94,7 @@ if __name__=="__main__":
                     method="SNPE",
                     device="cpu",
                     density_estimator="maf")
-
-    obs_theta = np.array([0.6, 1.5, 0.6, 2, 4, 0.32, 0.4, 4, 0.0463, 0.191, 126.3, 0.028])
-    obs_x = np.array([ 7.147,       5.40525194, 18.776,      -0.28197114,  1.327,      -0.0698291 ])
-    num_samples = 10000
-
-    posterior.set_default_x(obs_x)
-    posterior_samples = posterior.sample((num_samples,))
-
-
-
-    from view import pairplot, marginal_correlation, marginal
-
-    keys = np.array([r'$c_{1}$', r'$c_{2}$', r'$c_{3}$', r'$\tau_{mtt}$', r'$\tau_{vs}$', 
-                     r'$\alpha$', r'$E_0$', r'$V_0$', r'$\epsilon$', r'$\rho_0$', 
-                     r'$\nu_0$', r'$TE$'])
     
-    limits = np.array([
-        [0.3,       0.9   ],
-        [1,         2     ],
-        [0.3,       0.9   ],
-        [1,         5     ],
-        [0.1,      30     ],
-        [0.1,       0.5   ],
-        [0.1,       0.8   ],
-        [1,        10     ],
-        [0.3390,    0.3967],
-        [10,     1000     ],
-        [40,      440     ],
-        [0.015,     0.040 ],
-    ])
+    torch.save(posterior, PATH + '/PDCM_posterior.pt')
 
-
-    fig, ax = pairplot(posterior_samples, labels=keys)
-    plt.savefig('svg/pairplot.svg', dpi=300)
-
-    fig, ax = marginal_correlation(posterior_samples, labels=keys, figsize=(10, 10))
-    plt.savefig('svg/marginal_correlation.svg', dpi=300)
-
-    # NVC
-    fig, ax = pairplot(posterior_samples[:, :3], labels=keys[:3])
-    plt.savefig('svg/pairplot_NVC.svg', dpi=300)
-    # BOLD 
-    fig, ax = pairplot(posterior_samples[:, 3:], labels=keys[3:])
-    plt.savefig('svg/pairplot_BOLD.svg', dpi=300)
-
-    fig, ax = marginal(posterior_samples, labels=keys, limits=limits, figsize=(8, 12))
-    for i in range(len(keys)):
-        ax[i].axvline(obs_theta[i], color='r', linestyle='--')
-    plt.savefig('svg/marginal.svg', dpi=300)
-
-    IPython.embed()
+    import IPython; IPython.embed()

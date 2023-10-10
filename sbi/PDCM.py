@@ -4,7 +4,7 @@ from simulators.NVC import NVC
 
 def worker(theta):
 
-    t_sim = 50
+    t_sim = 70
     dt = 0.001
 
     T = int(t_sim/dt)
@@ -13,7 +13,7 @@ def worker(theta):
 
     # P-DCM
     U = np.zeros((int(t_sim/dt), 2))
-    U[int(10/dt):int(15/dt), 0] = 1
+    U[int(10/dt):int(40/dt), 0] = 1
 
     _sigma   = -3
     _mu      = -1.5
@@ -78,59 +78,99 @@ def worker(theta):
 
         BOLD[t] = V_0 * (k1*(1 - Q[t]) + k2*(1 - Q[t]/V[t]) + k3*(1 - V[t]))
 
-    # remove initial transient
-    U = U[int(6/dt):]
-    X = X[int(6/dt):]
-    F = F[int(6/dt):]
-    V = V[int(6/dt):]
-    Q = Q[int(6/dt):]
-    BOLD = BOLD[6000:]
+    # remove initial transient up to stimulus onset
+    U = U[int(10/dt):]
+    X = X[int(10/dt):]
+    F = F[int(10/dt):]
+    V = V[int(10/dt):]
+    Q = Q[int(10/dt):]
+    BOLD = BOLD[int(10/dt):]
+
+    stats = gen_stats(BOLD[:,0], dt)
+
+    return U, X, F, V, Q, BOLD, stats
+
+
+def gen_stats(BOLD, dt):
 
     if np.any(np.isnan(BOLD)):
-        return U, X, F, V, Q, BOLD, np.nans(6)
-
+        return {
+            'mean': np.nan,
+            'std': np.nan,
+            'skew': np.nan,
+            'kurt': np.nan,
+            'max_val': np.nan,
+            'min_val': np.nan,
+            'max_pos': np.nan,
+            'min_pos': np.nan,
+            'max_slope': np.nan,
+            'min_slope': np.nan,
+            'max_slope_pos': np.nan,
+            'min_slope_pos': np.nan,
+            'positive_area': np.nan,
+            'negative_area': np.nan,
+            'ratio_area': np.nan,
+        }
+    
     else:
-        # compute summary statistics from BOLD signal (e.g. peak and undershoot)
-        # peak location
-        peak_idx = np.argmax(BOLD)
-        peak_time = peak_idx * dt - 10 + 6
-        peak_amp  = BOLD[peak_idx, 0]
-        # undershoot location
-        if peak_idx == len(BOLD) - 1:
-            undershoot_idx = peak_idx
-            undershoot_time = peak_time
-            undershoot_amp  = peak_amp
-        else:
-            undershoot_idx = np.argmin(BOLD[peak_idx:]) + peak_idx
-            undershoot_time = undershoot_idx * dt - 10 + 6
-            undershoot_amp  = BOLD[undershoot_idx, 0]
-        # initial dip location
-        if peak_idx == 0:
-            initial_dip_idx = peak_idx
-            initial_dip_time = peak_time
-            initial_dip_amp  = peak_amp
-        else:
-            initial_dip_idx = np.argmin(BOLD[:peak_idx])
-            initial_dip_time = initial_dip_idx * dt - 10 + 6
-            initial_dip_amp  = BOLD[initial_dip_idx, 0]
 
-        if peak_time > initial_dip_time and peak_time < undershoot_time and peak_amp > initial_dip_amp and peak_amp > undershoot_amp:
+        # get moments of BOLD signal
+        mean = np.mean(BOLD)
+        std = np.std(BOLD)
+        skew = np.mean((BOLD - mean)**3) / std**3
+        kurt = np.mean((BOLD - mean)**4) / std**4
 
-            stats = np.array([peak_time, peak_amp, undershoot_time, undershoot_amp, initial_dip_time, initial_dip_amp])
 
-            return U, X, F, V, Q, BOLD, stats
-        
-        else: 
+        # find max and min values
+        max_val = np.max(BOLD)
+        min_val = np.min(BOLD)
 
-            stats = np.array([np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
-            return U, X, F, V, Q, BOLD, stats
+        max_pos = np.argmax(BOLD) * dt
+        min_pos = np.argmin(BOLD) * dt
 
+        # find max and min slopes
+        dBOLD = np.diff(BOLD)
+        max_slope = np.max(dBOLD)
+        min_slope = np.min(dBOLD)
+
+        max_slope_pos = np.argmax(dBOLD) * dt 
+        min_slope_pos = np.argmin(dBOLD) * dt
+
+        # find positive area under BOLD response
+        positive_area = np.sum(BOLD[BOLD > 0]) * dt
+
+        # find negative area under BOLD response
+        negative_area = np.sum(BOLD[BOLD < 0]) * dt
+
+        ratio_area = positive_area / (negative_area + positive_area)
+
+        stats = {
+            'mean': mean,
+            'std': std,
+            'skew': skew,
+            'kurt': kurt,
+            'max_val': max_val,
+            'min_val': min_val,
+            'max_pos': max_pos,
+            'min_pos': min_pos,
+            'max_slope': max_slope,
+            'min_slope': min_slope,
+            'max_slope_pos': max_slope_pos,
+            'min_slope_pos': min_slope_pos,
+            'positive_area': positive_area,
+            'negative_area': negative_area,
+            'ratio_area': ratio_area,
+
+        }
+
+        return stats
+            
 if __name__ == '__main__':
 
     import pylab as plt
 
     theta = {'c1': 0.6, 'c2': 1.5, 'c3': 0.6,
-             'tau_mtt': 2, 'tau_vs': 4, 'alpha': 0.32, 'E_0': 0.4, 'V_0': 4, 'eps': 0.0463, 'rho_0': .191, 'nu_0': 126.3, 'TE': 0.028}
+             'tau_mtt': 2, 'tau_vs': 4, 'alpha': 0.32, 'E_0': 0.4, 'V_0': 2, 'eps': 0.2, 'rho_0': .191, 'nu_0': 126.3, 'TE': 0.028}
     U, X, F, V, Q, BOLD, stats = worker(theta)
 
     plt.figure(figsize=(5, 10))
@@ -169,23 +209,7 @@ if __name__ == '__main__':
     plt.savefig('svg/PDCM_timeseries.svg')
     plt.show()
 
-    plt.figure()
-    colors = ['black', 'red', 'blue']
-    plt.subplot(1, 2, 1)
-    plt.title('Feature Timing')
-    plt.bar(np.arange(3), stats[::2], color=colors)
-    plt.xticks(np.arange(3), ['peak time', 'undershoot time', 'initial dip time'],
-               rotation=45, ha='right')
-    plt.subplot(1, 2, 2)
-    plt.title('Feature Amplitude')
-    plt.bar(np.arange(3), stats[1::2], color=colors)
-    plt.xticks(np.arange(3), ['peak amplitude', 'undershoot amplitude', 'initial dip amplitude'],
-               rotation=45, ha='right')
-    plt.tight_layout()
-    plt.savefig('svg/PDCM_stats.svg')
-    plt.show()
-
-    print(np.array(stats))
+    print(np.array(stats.values()))
     print(np.array(theta.values()))
 
     import IPython; IPython.embed()
