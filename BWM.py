@@ -13,7 +13,7 @@ def BWM(theta):
     U = np.zeros((int(t_sim/dt)))
     U[int(10/dt):int(15/dt)] = 1
 
-    X = np.zeros((T, 1))
+    X = 0
     F = np.zeros((T, 1))
 
     xinflow = 0
@@ -22,10 +22,10 @@ def BWM(theta):
     yvaso   = 0
 
     for t in range(T):
-        X[t] = X[t] + dt * (-X[t] + U[t])      # neural activity
+        X = X + dt * (-X + U[t])      # neural activity
 
         xinflow = np.exp(xinflow)
-        yvaso   = yvaso + dt * (X[t] - theta['c1'] * xvaso)   # vasoactive signal
+        yvaso   = yvaso + dt * (X - theta['c1'] * xvaso)   # vasoactive signal
         df_a    = theta['c2'] * xvaso - theta['c3'] * (xinflow - 1)    # inflow
         yinflow = yinflow + dt * (df_a / xinflow)
         xvaso   = yvaso
@@ -63,8 +63,8 @@ def BWM(theta):
 
         f_out = v ** (1 / alpha) + tau_vs * v_dot                           # outflow of blood
 
-        q = q + q_dot
         v = v + v_dot
+        q = q + q_dot
 
         V[t] = v
         Q[t] = q
