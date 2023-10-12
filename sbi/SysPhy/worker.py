@@ -227,14 +227,18 @@ if __name__=="__main__":
 
     plt.figure()
     plt.subplot(3, 1, 1)
+    plt.title(r'Cerebral Blood Flow before upsampling ($F_l$)')
     plt.imshow(F_l.T, aspect='auto', cmap='Reds', interpolation='none')
     plt.colorbar()
     plt.subplot(3, 1, 2)
+    plt.title(r'Cerebral Blood Flow after upsampling ($F_k$)')
     plt.imshow(F_k.T, aspect='auto', cmap='Reds', interpolation='none')
     plt.colorbar()
     plt.subplot(3, 1, 3)
+    plt.title(r'BOLD signal ($B$)')
     plt.imshow(B.T, aspect='auto', cmap='Reds')
     plt.colorbar()
+    plt.tight_layout(pad=1)
     plt.show()
 
     import IPython; IPython.embed()
