@@ -43,8 +43,10 @@ def worker(theta):
 
         X[t] = x
 
+        s = x[0]*theta['lam_E'] + abs(x[1]*theta['lam_I'])
+
         xinflow = np.exp(xinflow)
-        yvaso   = yvaso + dt * (x[0] - theta['c1'] * xvaso)   # vasoactive signal
+        yvaso   = yvaso + dt * (s - theta['c1'] * xvaso)   # vasoactive signal
         df_a    = theta['c2'] * xvaso - theta['c3'] * (xinflow - 1)    # inflow
         yinflow = yinflow + dt * (df_a / xinflow)
         xvaso   = yvaso
@@ -108,9 +110,11 @@ if __name__ == '__main__':
     import pylab as plt
 
     theta = {'a': 48, 'b': 981, 'd': 8.9e-3, 'nu_E': 1, 'nu_I': 1.5, 'G_EE': 0.1009, 'G_EI': 0.1346, 'G_IE': -0.1689, 'G_II': -0.1371, 'tau_m': 10e-3, 'tau_s': .5e-3, 'C_m': 250e-6,
-             'c1': 0.6, 'c2': 1.5, 'c3': 0.6,
+             'lam_E': 1, 'lam_I': 0, 'c1': 0.6, 'c2': 1.5, 'c3': 0.6,
              'tau_mtt': 2, 'tau_vs': 4, 'alpha': 0.32, 'E_0': 0.4, 'V_0': 4, 'eps': 0.0463, 'rho_0': .191, 'nu_0': 126.3, 'TE': 0.028}
     U, X, F, V, Q, BOLD = worker(theta)
+
+    
 
     plt.figure(figsize=(5, 10))
     plt.subplot(6, 1, 1)
