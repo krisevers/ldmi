@@ -217,7 +217,7 @@ def F(E, theta):
 if __name__=="__main__":
 
     theta = {'a': 48, 'b': 981, 'd': 8.9e-3, 'tau_m': 10e-3, 'tau_s': .5e-3, 'C_m': 250e-6,                             # intrinsic neuronal parameters
-             'I_L4E': 500 * 87.8e-3 * 15, 'I_L4I': 300 * 87.8e-3 * 15 * -4,                                             # external input
+             'I_L4E': 900 * 87.8e-3 * 15, 'I_L4I': 700 * 87.8e-3 * 15,                                                  # external input
              'lam_E': 1, 'lam_I': 0, 'c1': 0.6, 'c2': 1.5, 'c3': 0.6,                                                   # neurovascular coupling parameters
              'E_0v': 0.35, 'V_0t': 2, 'TE': 0.028}                                                                      # hemodynamic parameters
     
@@ -242,4 +242,3 @@ if __name__=="__main__":
     plt.show()
 
     import IPython; IPython.embed()
-
