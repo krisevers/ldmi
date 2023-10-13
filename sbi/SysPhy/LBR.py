@@ -6,7 +6,7 @@ class LBR:
 
         # --------------------------------------------------------------------------
         # Default parameters
-        self.P = theta
+        self.P = theta.copy()
 
         self.P['dt'] = 0.001
 

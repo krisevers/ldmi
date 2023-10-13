@@ -1,12 +1,12 @@
 import numpy as np
-import pylab as plt
 
 from scipy import ndimage
+from scipy import signal
 
-from utils import get_L2K
+from utils import get_L2K, get_N
 from LBR import LBR
 
-def F(E, theta):
+def F(E, theta={}, test=False):
     """
     Black-Box forward model for the DMF, NVC and LBR models
 
@@ -16,8 +16,6 @@ def F(E, theta):
     Returns:
     Psi - observables (dict)
     """
-
-    Psi = {}    # observables
 
     ##########################################################################################
     # Experimental parameters
@@ -37,8 +35,26 @@ def F(E, theta):
                  [0.0548, 0.0269, 0.0257, 0.0022, 0.0600, 0.3158, 0.0086, 0.0000],
                  [0.0156, 0.0066, 0.0211, 0.0166, 0.0572, 0.0197, 0.0396, 0.2252],
                  [0.0364, 0.0010, 0.0034, 0.0005, 0.0277, 0.0080, 0.0658, 0.1443]])
+    # update connection probabilities (according the Potjans & Diesmann (2014); Fig. 11)
+    if 'P_L23EtoL23E' in theta:         # superficial self-excitation
+        P[0, 0] = theta['P_L23EtoL23E']
+    if 'P_L4EtoL23E' in theta:          # feedforward granular to superficial excitation
+        P[0, 2] = theta['P_L4EtoL23E']
+    if 'P_L23EtoL5E' in theta:          # feedforward deep to superficial excitation
+        P[4, 0] = theta['P_L23EtoL5E']
+    if 'P_L23EtoL4I' in theta:          # feedback superficial to granular inhibition
+        P[3, 0] = theta['P_L23EtoL4I']
+    if 'P_L23EtoL6I' in theta:          # feedback superficial to deep inhibition
+        P[7, 0] = theta['P_L23EtoL6I']
+    if 'P_L5EtoL23I' in theta:          # feedback deep to superficial inhibition
+        P[1, 4] = theta['P_L5EtoL23I']
+    if 'P_L6E_L4I' in theta:            # feedback deep to granular inhibition
+        P[3, 6] = theta['P_L6E_L4I']
+    if 'P_L5E_L6E' in theta:            # feedforward deep to deep excitation
+        P[6, 4] = theta['P_L5E_L6E']
     
-    N = np.array([20683,  5834,   21915,  5479,   4850,   1065,   14395,  2948  ])   # number of neurons per population
+    # N = get_N(E['area'])                                                # number of neurons in each population
+    N = np.array( [20683,  5834,   21915,  5479,   4850,   1065,   14395,  2948  ])
 
     C = np.log(1-P) / np.log(1 - 1/(N * N)) / N                         # number of synapses
 
@@ -133,10 +149,10 @@ def F(E, theta):
         lam_I = 0
 
     # remove initial transient (first second)
+    X_base = X[int(1/dt_DMF)]   # baseline synaptic current
     X = X[int(1/dt_DMF):]
     Y = Y[int(1/dt_DMF):]
 
-    X_base = X[int(1/dt_DMF)]   # baseline synaptic current
     T = X.shape[0]
 
     S = lam_E*abs(X[:,::2] - X_base[::2]) + lam_I*abs(X[:,1::2] - X_base[1::2])    # neural signal
@@ -201,20 +217,48 @@ def F(E, theta):
 
     lbr_model = LBR(K, theta)
     
-    B, _, _ = lbr_model.sim(F_k, K)    # BOLD signal at each cortical depth
+    B_k, _, _ = lbr_model.sim(F_k, K)    # BOLD signal at each cortical depth
 
+    # downsample BOLD signal to match voxel space
+    num_voxels = 3
+    n = int(K/num_voxels)
+    window = np.ones((1, n))/n
+    B_v = signal.convolve2d(B_k, window, mode='valid')[:,::n]
 
     ##########################################################################################
     # Observables
+    Psi = {}    # observables
 
-    return Psi, X, S, F_l, F_k, B
+    Psi['peak_pos'] = np.argmax(B_v, axis=0)     # peak position
+    Psi['peak_amp'] = np.max(B_v, axis=0)        # peak amplitude
+    Psi['area']     = np.trapz(B_v, axis=0)      # area under the curve
 
+    Psi['upslope']  = np.zeros(num_voxels)       # upslope
+    Psi['downslope']= np.zeros(num_voxels)       # downslope
+    for i in range(num_voxels):
+        Psi['upslope'][i]   = np.max(np.diff(B_v[:,i]))
+        Psi['downslope'][i] = np.min(np.diff(B_v[:,i]))
+
+    # difference between voxels
+    Psi['peak_dpos']   = np.diff(Psi['peak_pos'])
+    Psi['peak_damp']   = np.diff(Psi['peak_amp'])
+    Psi['area_d']      = np.diff(Psi['area'])
+    Psi['upslope_d']   = np.diff(Psi['upslope'])
+    Psi['downslope_d'] = np.diff(Psi['downslope'])
+
+    if test:
+        return Psi, X, S, F_l, F_k, B_k, B_v
+
+    else:
+        return Psi
 
 
 
 
 
 if __name__=="__main__":
+
+    import pylab as plt
 
     theta = {'a': 48, 'b': 981, 'd': 8.9e-3, 'tau_m': 10e-3, 'tau_s': .5e-3, 'C_m': 250e-6,                             # intrinsic neuronal parameters
              'I_L4E': 900 * 87.8e-3 * 15, 'I_L4I': 700 * 87.8e-3 * 15,                                                  # external input
@@ -223,22 +267,65 @@ if __name__=="__main__":
     
     E = {'K': 12, 'area': 'V1', 'T': 50, 'onset': 10, 'offset': 20}   # experimental parameters
 
-    Psi, X, S, F_l, F_k, B = F(E, theta)  # forward model
+    Psi, X, S, F_l, F_k, B_k, B_v = F(E, theta, test=True)  # forward model
 
-    plt.figure()
-    plt.subplot(3, 1, 1)
+    # casting to float32
+    X = X.astype(np.float32)
+    S = S.astype(np.float32)
+    F_l = F_l.astype(np.float32)
+    F_k = F_k.astype(np.float32)
+    B_k = B_k.astype(np.float32)
+    B_v = B_v.astype(np.float32)
+
+    fig = plt.figure(figsize=(7, 7))
+    plt.subplot(5, 1, 1)
+    plt.title(r'Layer specific neural activity ($S$)')
+    plt.imshow(S.T, aspect='auto', cmap='Reds', interpolation='none')
+    plt.yticks(np.arange(4), ['L23', 'L4', 'L5', 'L6'])
+    plt.colorbar()
+    plt.subplot(5, 1, 2)
     plt.title(r'Cerebral Blood Flow before upsampling ($F_l$)')
     plt.imshow(F_l.T, aspect='auto', cmap='Reds', interpolation='none')
+    plt.yticks(np.arange(4), ['L23', 'L4', 'L5', 'L6'])
     plt.colorbar()
-    plt.subplot(3, 1, 2)
+    plt.subplot(5, 1, 3)
     plt.title(r'Cerebral Blood Flow after upsampling ($F_k$)')
     plt.imshow(F_k.T, aspect='auto', cmap='Reds', interpolation='none')
     plt.colorbar()
-    plt.subplot(3, 1, 3)
-    plt.title(r'BOLD signal ($B$)')
-    plt.imshow(B.T, aspect='auto', cmap='Reds')
+    plt.subplot(5, 1, 4)
+    plt.title(r'BOLD signal before downsampling ($B_k$)')
+    plt.imshow(B_k.T, aspect='auto', cmap='Reds', interpolation='none')
+    fig.text(0.07, 0.4, 'Cortical depth (K)', va='center', rotation='vertical')
+    plt.colorbar()
+    plt.subplot(5, 1, 5)
+    plt.title(r'BOLD signal after downsampling ($B_v$)')
+    plt.imshow(B_v.T, aspect='auto', cmap='Reds', interpolation='none')
+    plt.yticks(np.arange(3), ['Superficial', 'Granular', 'Deep'])
     plt.colorbar()
     plt.tight_layout(pad=1)
+    plt.savefig('pdf/ff_L4.pdf', format='pdf', dpi=1200)
+
+    # plot Psi observables
+    plt.figure(figsize=(7, 7))
+    plt.subplot(5, 1, 1)
+    plt.title(r'Peak position ($\Psi_{peak\_pos}$)')
+    plt.plot(Psi['peak_pos'])
+    plt.subplot(5, 1, 2)
+    plt.title(r'Peak amplitude ($\Psi_{peak\_amp}$)')
+    plt.plot(Psi['peak_amp'])
+    plt.subplot(5, 1, 3)
+    plt.title(r'Area under the curve ($\Psi_{area}$)')
+    plt.plot(Psi['area'])
+    plt.subplot(5, 1, 4)
+    plt.title(r'Upslope ($\Psi_{upslope}$)')
+    plt.plot(Psi['upslope'])
+    plt.subplot(5, 1, 5)
+    plt.title(r'Downslope ($\Psi_{downslope}$)')
+    plt.plot(Psi['downslope'])
+    plt.tight_layout(pad=1)
+    plt.savefig('pdf/ff_L4_Psi.pdf', format='pdf', dpi=1200)
+
     plt.show()
+    
 
     import IPython; IPython.embed()

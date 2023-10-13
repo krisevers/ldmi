@@ -158,3 +158,5 @@ cython_debug/
 
 sbi/data/*
 sbi/sbi-logs/*
+
+sbi/SysPhy/data/*
