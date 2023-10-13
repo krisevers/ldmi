@@ -260,8 +260,10 @@ if __name__=="__main__":
 
     import pylab as plt
 
+    J_E = 87.8e-3
+
     theta = {'a': 48, 'b': 981, 'd': 8.9e-3, 'tau_m': 10e-3, 'tau_s': .5e-3, 'C_m': 250e-6,                             # intrinsic neuronal parameters
-             'I_L4E': 900 * 87.8e-3 * 15, 'I_L4I': 700 * 87.8e-3 * 15,                                                  # external input
+             'I_L4E': 0.0983*902*15*J_E, 'I_L4I': 0.0619*902*15*J_E,                                                    # external input
              'lam_E': 1, 'lam_I': 0, 'c1': 0.6, 'c2': 1.5, 'c3': 0.6,                                                   # neurovascular coupling parameters
              'E_0v': 0.35, 'V_0t': 2, 'TE': 0.028}                                                                      # hemodynamic parameters
     
@@ -324,6 +326,32 @@ if __name__=="__main__":
     plt.plot(Psi['downslope'])
     plt.tight_layout(pad=1)
     plt.savefig('pdf/ff_L4_Psi.pdf', format='pdf', dpi=1200)
+
+    plt.figure(figsize=(7, 7))
+    peaks_S = np.max(S, axis=0)
+    plt.barh(width=peaks_S, y=np.arange(4), linewidth=2, color='black')
+    plt.xticks([])
+    plt.yticks([])
+    plt.gca().invert_yaxis()
+    plt.axis('off')
+    plt.savefig('pdf/ff_L4_S.pdf', format='pdf', dpi=1200)
+
+    plt.figure(figsize=(7, 7))
+    peaks_F_k = np.max(F_k, axis=0)
+    plt.plot(peaks_F_k, np.arange(1, E['K']+1), linewidth=2, color='black')
+    plt.xticks([])
+    plt.yticks([])
+    plt.axis('off')
+    plt.savefig('pdf/ff_L4_F_k.pdf', format='pdf', dpi=1200)
+
+    plt.figure(figsize=(7, 7))
+    peaks = np.max(B_k, axis=0)
+    plt.plot(peaks, np.arange(1, E['K']+1), linewidth=2, color='black')
+    plt.xticks([])
+    plt.yticks([])
+    plt.axis('off')
+    plt.savefig('pdf/ff_L4_B_k.pdf', format='pdf', dpi=1200)
+
 
     plt.show()
     
