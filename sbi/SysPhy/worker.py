@@ -267,7 +267,7 @@ if __name__=="__main__":
              'lam_E': 1, 'lam_I': 0, 'c1': 0.6, 'c2': 1.5, 'c3': 0.6,                                                       # neurovascular coupling parameters
              'E_0v': 0.35, 'V_0t': 2, 'TE': 0.028}                                                                          # hemodynamic parameters
     
-    E = {'K': 12, 'area': 'V1', 'T': 50, 'onset': 10, 'offset': 20}   # experimental parameters
+    E = {'K': 22, 'area': 'V1', 'T': 50, 'onset': 10, 'offset': 20}   # experimental parameters
 
     Psi, X, S, F_l, F_k, B_k, B_v = F(E, theta, test=True)  # forward model
 
@@ -372,7 +372,7 @@ if __name__=="__main__":
                  1.137348824014686,
                  1.3112423739480041,
                  1.4969968599088948,
-                ]) * 8
+                ]) * int(E['K']/1.5)
 
 
     plt.figure(figsize=(7, 7))
