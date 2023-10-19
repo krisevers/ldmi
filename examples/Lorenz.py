@@ -13,12 +13,12 @@ sigma, beta, rho = 10, 2.667, 28
 y0 = [0, 1, 1.05]
 
 t_sim = 100.
-dt = 1e-4
+dt = 1e-3
 
 L = Sim(dt=dt, t_sim=t_sim, y=y0, rho=rho, sigma=sigma, beta=beta)
 
 # Integrate the Lorenz equations
-L.integrate('euler')
+L.integrate('rk4')
 T = L.get_times()
 X = L.get_states()
 

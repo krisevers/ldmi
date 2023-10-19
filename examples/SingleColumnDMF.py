@@ -50,7 +50,7 @@ kappa = [0., 0., 0., 0., 0., 0., 0., 0.]
 
 y0 = np.zeros((M, 4), dtype=float)
 
-t_sim = 1
+t_sim = 80
 dt = 1e-4
 
 L = Sim(dt=dt, t_sim=t_sim, y=list(y0), sigma=sigma, tau_s=tau_s, tau_m=tau_m, C_m=C_m, kappa=list(kappa), tau_a=tau_a, a=a, b=b, d=d, nu_bg=nu_bg, W_bg=list(W_bg), nu_ext=list(nu_ext), W_ext=list(W_ext), W=list(W))
