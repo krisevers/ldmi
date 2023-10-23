@@ -1,0 +1,11 @@
+exp_dir: ./experiments
+sim_dir: ./simulators
+inf_dir: ./inference
+ana_dir: ./analysis
+
+cluster:
+  name: PizDaint
+  address: daint.cscs.ch
+  username: kevers
+  password: 
+device: cpu

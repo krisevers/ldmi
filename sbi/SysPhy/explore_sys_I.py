@@ -82,4 +82,3 @@ if rank == 0:
     X = np.array(X)
 
     np.save(PATH + args.name + '.npy', X)
-
