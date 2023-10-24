@@ -58,6 +58,7 @@ if __name__=="__main__":
     parser.add_argument('-m', '--method',  default='SNPE', help='Inference method')
     parser.add_argument('-d', '--device',  default='cpu', help='Device to use for training')
     parser.add_argument('-s', '--seed',    default=0, help='Random seed')
+    parser.add_argument('-k', '--depths',  default='k', help='Depth sampling method')
 
 
     # ratio training and test set
@@ -79,14 +80,24 @@ if __name__=="__main__":
 
     keys  = np.array(list(X[0]['theta'].keys()))
     keys = ['I_L23E', 'I_L23I', 'I_L4E', 'I_L4I', 'I_L5E', 'I_L5I', 'I_L6E', 'I_L6I']
+
+    if args.depths == 'v':
+        psi_v = ['Superficial', 'Middle', 'Deep']                                   
+        num_psi = 3             # number of voxel space depths
+    elif args.depths == 'k':
+        K = 12                  # number of cortical depths
+        psi_k = np.arange(K)
+        num_psi = K
     num_theta = len(keys)
-    num_psi   = len(np.array(np.concatenate(list(X[0]['Psi'].values()))))
     psi   = np.empty((num_simulations, num_psi))
     theta = np.empty((num_simulations, num_theta))
 
 
     for i in range(num_simulations):
-        psi[i]   = np.array(np.concatenate(list(X[i]['Psi'].values())))
+        if args.depths == 'v':
+            psi[i]   = np.array(np.concatenate(list(X[i]['Psi'].values())))[:3]
+        elif args.depths == 'k':
+            psi[i]   = np.array(np.concatenate(list(X[i]['Psi'].values())))[3:3+K]
         for j in range(num_theta):
             theta[i, j] = X[i]['theta'][keys[j]]
 

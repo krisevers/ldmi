@@ -40,7 +40,7 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-E = {'K': 12, 'area': 'V1', 'T': 40, 'onset': 10, 'offset': 20}   # experimental parameters
+E = {'K': 12, 'area': 'V1', 'T': 15, 'onset': 1, 'offset': 10}   # experimental parameters
 
 theta = np.transpose([
     np.random.uniform(0,   200,    size=args.num_simulations),  # I_L23E
@@ -72,6 +72,12 @@ for i in tqdm.tqdm(range(num_simulations_per_worker), disable=not rank==0):
     }
     Psi_i = F(E, theta_i)
     X_i = {"Psi": Psi_i, "theta": theta_i}
+    peak_amp_v = X_i['Psi']['peak_amp_v']
+    peak_amp_k = X_i['Psi']['peak_amp_k']
+    X_i['Psi'] = {
+        'peak_amp_v': peak_amp_v,
+        'peak_amp_k': peak_amp_k,
+    }
     X.append(X_i)
 
 # gather results
