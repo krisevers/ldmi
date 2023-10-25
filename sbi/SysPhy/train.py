@@ -52,34 +52,32 @@ if __name__=="__main__":
 
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--path',    default='data/', help='Set path to obtain data')
-    parser.add_argument('-n', '--name',    help='Name of experiment')
-    parser.add_argument('-t', '--threads', default=1, help='Number of threads to use for training')
-    parser.add_argument('-m', '--method',  default='SNPE', help='Inference method')
-    parser.add_argument('-d', '--device',  default='cpu', help='Device to use for training')
-    parser.add_argument('-s', '--seed',    default=0, help='Random seed')
-    parser.add_argument('-k', '--depths',  default='k', help='Depth sampling method')
-
-
-    # ratio training and test set
-    parser.add_argument('-r', '--ratio', default=0.8, help='Ratio of training and test set')
-
+    parser.add_argument('-p', '--path',    default='data/', help='Set data path')
+    parser.add_argument('-n', '--name',                     help='Name of experiment')
+    parser.add_argument('-t', '--threads', default=1,       help='Number of threads to use for training')
+    parser.add_argument('-m', '--method',  default='SNPE',  help='Inference method')
+    parser.add_argument('-d', '--device',  default='cpu',   help='Device to use for training')
+    parser.add_argument('-s', '--seed',    default=0,       help='Random seed')
+    parser.add_argument('-k', '--depths',  default='k',     help='Depth sampling method')
+    parser.add_argument('-r', '--ratio',   default=0.8,     help='Ratio of training and test set')
 
     args = parser.parse_args()
 
-    PATH = args.path
+    PATH = args.path + args.name + '/'
 
     # set random seed
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
     # load data
-    X = np.load(PATH + args.name + '.npy', allow_pickle=True)
+    X = np.load(PATH + 'X.npy', allow_pickle=True)
 
     num_simulations = len(X)
 
     keys  = np.array(list(X[0]['theta'].keys()))
-    keys = ['I_L23E', 'I_L23I', 'I_L4E', 'I_L4I', 'I_L5E', 'I_L5I', 'I_L6E', 'I_L6I']
+    np.save(PATH + 'keys.npy', keys)
+    obs = np.array(list(X[0]['Psi'].keys()))
+    np.save(PATH + 'obs.npy', obs)
 
     if args.depths == 'v':
         psi_v = ['Superficial', 'Middle', 'Deep']                                   
@@ -116,6 +114,18 @@ if __name__=="__main__":
     psi   = np.delete(psi, idx, axis=0)
     theta = np.delete(theta, idx, axis=0)
     print("Removed {} simulations with Infs".format(len(idx)))
+
+    # remove negative values
+    idx   = np.argwhere(psi < 0)
+    psi   = np.delete(psi, idx, axis=0)
+    theta = np.delete(theta, idx, axis=0)
+    print("Removed {} simulations with negative values".format(len(idx)))
+
+    # remove values higher than 100
+    idx   = np.argwhere(psi > 100)
+    psi   = np.delete(psi, idx, axis=0)
+    theta = np.delete(theta, idx, axis=0)
+    print("Removed {} simulations with values higher than 100".format(len(idx)))
     
     theta = torch.from_numpy(theta).float()
     psi   = torch.from_numpy(psi).float()
@@ -126,26 +136,26 @@ if __name__=="__main__":
     idx = np.random.permutation(num_simulations)
     idx_train = idx[:int(args.ratio * num_simulations)]
     idx_test  = idx[int(args.ratio * num_simulations):]
+
     theta_train = theta[idx_train]
     psi_train   = psi[idx_train]
-
     theta_test = theta[idx_test]
     psi_test   = psi[idx_test]
 
     print("Training posterior on {} simulations".format(num_simulations))
 
     posterior = train(num_simulations,
-                    psi_train,
-                    theta_train,
-                    num_threads = args.threads,
-                    method      = args.method,
-                    device      = args.device,
-                    density_estimator="maf")
-    
-    torch.save(posterior, PATH + args.name + '_posterior.pt')
-    np.save(PATH + args.name + '_psi_train.npy',    psi_train.numpy())
-    np.save(PATH + args.name + '_theta_train.npy',  theta_train.numpy())
-    np.save(PATH + args.name + '_psi_test.npy',     psi_test.numpy())
-    np.save(PATH + args.name + '_theta_test.npy',   theta_test.numpy())
+                      psi_train,
+                      theta_train,
+                      num_threads       = args.threads,
+                      method            = args.method,
+                      device            = args.device,
+                      density_estimator = "maf")
+        
+    torch.save(posterior, PATH + 'posterior.pt')
+    np.save(PATH + 'psi_train.npy',    psi_train.numpy())
+    np.save(PATH + 'theta_train.npy',  theta_train.numpy())
+    np.save(PATH + 'psi_test.npy',     psi_test.numpy())
+    np.save(PATH + 'theta_test.npy',   theta_test.numpy())
 
     import IPython; IPython.embed()

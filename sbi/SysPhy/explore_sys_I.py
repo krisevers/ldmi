@@ -18,9 +18,9 @@ from worker import F
 import os 
 
 parser = argparse.ArgumentParser(description='Generate dataset for combined neuronal- and hemodynamic-based model.')
-parser.add_argument('--num_simulations', type=int, default=1, help='number of simulations to run')
-parser.add_argument('--path', type=str, default='data/', help='path to save results')
-parser.add_argument("--name", type=str, default='X_input', help='name of experiment')
+parser.add_argument('--num_simulations', type=int, default=1,       help='number of simulations to run')
+parser.add_argument('--path',            type=str, default='data/', help='path to save results')
+parser.add_argument("--name",            type=str,                  help='name of experiment')
 args = parser.parse_args()
 
 """
@@ -29,7 +29,7 @@ Explore systemic parameters (i.e. parameters that are not related to neurovascul
 experiment sys_I: explore input currents to each population
 """
 
-PATH = args.path
+PATH = args.path + args.name + '/'
 
 import os
 # check if path exists
@@ -43,14 +43,14 @@ size = comm.Get_size()
 E = {'K': 12, 'area': 'V1', 'T': 15, 'onset': 1, 'offset': 10}   # experimental parameters
 
 theta = np.transpose([
-    np.random.uniform(0,   200,    size=args.num_simulations),  # I_L23E
-    np.random.uniform(0,   200,    size=args.num_simulations),  # I_L23I
-    np.random.uniform(0,   200,    size=args.num_simulations),  # I_L4E
-    np.random.uniform(0,   200,    size=args.num_simulations),  # I_L4I
-    np.random.uniform(0,   200,    size=args.num_simulations),  # I_L5E
-    np.random.uniform(0,   200,    size=args.num_simulations),  # I_L5I
-    np.random.uniform(0,   200,    size=args.num_simulations),  # I_L6E
-    np.random.uniform(0,   200,    size=args.num_simulations),  # I_L6I
+    np.random.uniform(0,   42,    size=args.num_simulations),  # I_L23E
+    np.random.uniform(0,   35,    size=args.num_simulations),  # I_L23I
+    np.random.uniform(0,   116,   size=args.num_simulations),  # I_L4E
+    np.random.uniform(0,   73,    size=args.num_simulations),  # I_L4I
+    np.random.uniform(0,   42,    size=args.num_simulations),  # I_L5E
+    np.random.uniform(0,   35,    size=args.num_simulations),  # I_L5I
+    np.random.uniform(0,   61,    size=args.num_simulations),  # I_L6E
+    np.random.uniform(0,   23,    size=args.num_simulations),  # I_L6I
 ])
 
 params_per_worker = np.array_split(theta, comm.Get_size())
@@ -87,4 +87,5 @@ if rank == 0:
     X = np.ravel(X)
     X = np.array(X)
 
-    np.save(PATH + args.name + '.npy', X)
+    np.save(PATH + 'X.npy', X)
+    keys = np.array(list(X[0]['theta'].keys()))

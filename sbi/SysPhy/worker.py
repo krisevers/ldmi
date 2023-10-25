@@ -3,7 +3,7 @@ import numpy as np
 from scipy import ndimage
 from scipy import signal
 
-from utils import get_L2K, get_N, get_betas
+from utils import get_L2K, get_N, HRF
 from LBR import LBR
 
 def F(E, theta={}, mode='Psi'):
@@ -265,8 +265,28 @@ def F(E, theta={}, mode='Psi'):
         return Psi, X, S, F_l, F_k, B_k, B_v
     
     if mode == 'betas':
+        import IPython; IPython.embed()
+
         # compute depth specific beta values from GLM regression
-        betas = get_betas(B_k, E['onset'], E['offset'])
+        TR = 2
+        Y = B_k
+        condition = np.zeros(T)
+        condition[int(E['onset']/dt_DMF):int(E['offset']/dt_DMF)] = 1
+        condition = condition[::int(TR/dt_DMF)]
+        X = np.convolve(condition, HRF(np.arange(0, 40, TR)))[:len(condition)]      # predicted BOLD signal
+        X = X[int(1/dt_DMF):]
+
+        # sample X and Y with TR resolution
+        X = X[::int(TR/dt_DMF)]
+        Y = Y[::int(TR/dt_DMF), :]
+
+        X = (X - np.min(X)) / (np.max(X) - np.min(X))   # normalize X between 0 and 1
+        X = np.tile(X, (Y.shape[1], 1)).T               # repeat for each population (i.e. column of Y)
+
+        # scale betas to obtain original signal (Y = X*B)
+        betas = (np.linalg.pinv(X @ X.T) @ X).T @ Y
+        betas = betas[0, :] 
+
         return betas
 
     else:

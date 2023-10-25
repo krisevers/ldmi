@@ -184,3 +184,15 @@ def get_N(area='V1'):
         N = np.array([49224, 13884, 18066, 4516, 16982, 3729, 20395, 4176]) / 2
 
     return N
+
+def HRF(times):
+    """ Return values for HRF at given times """
+    from scipy.stats import gamma
+    # Gamma pdf for the peak
+    peak_values = gamma.pdf(times, 6)
+    # Gamma pdf for the undershoot
+    undershoot_values = gamma.pdf(times, 12)
+    # Combine them
+    values = peak_values - 0.35 * undershoot_values
+    # Scale max to 0.6
+    return values / np.max(values) * 0.6
