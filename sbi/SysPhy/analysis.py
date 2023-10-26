@@ -26,8 +26,7 @@ theta_test = np.load(PATH + 'theta_test.npy')
 
 num_samples = 10000
 
-perm_idx = 0
-
+perm_idx = 100
 posterior.set_default_x(psi_test[perm_idx])
 posterior_samples = posterior.sample((num_samples,))
 
@@ -49,5 +48,28 @@ fig, ax = marginal(posterior_samples, labels=keys, figsize=(8, 12))
 for i in range(len(keys)):
     ax[i].axvline(theta_test[perm_idx][i], color='r', linestyle='--')
 plt.savefig('pdf/' + args.name + '/marginal.pdf', dpi=300)
+
+
+# Chen et al. (2013)
+chen2013 = np.array([
+                0.40954222493225806,
+                0.4522709412773616, 
+                0.5854525415825667, 
+                0.6300105321851186, 
+                0.4614955702868471, 
+                0.4238112162880406, 
+                0.41772667838358674,
+                0.29562506725273
+            ])
+from scipy.interpolate import interp1d
+f = interp1d(np.arange(0, 8), chen2013, kind='cubic')
+chen2013 = f(np.linspace(0, 7, 12))
+
+posterior.set_default_x(chen2013)
+posterior_samples = posterior.sample((num_samples,))
+
+
+
+
 
 IPython.embed()
