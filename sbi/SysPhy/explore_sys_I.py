@@ -42,6 +42,17 @@ size = comm.Get_size()
 
 E = {'K': 12, 'area': 'V1', 'T': 15, 'onset': 1, 'offset': 10}   # experimental parameters
 
+bounds = {
+    'I_L23E':       [0,   42],
+    'I_L23I':       [0,   35],
+    'I_L4E':        [0,   116],
+    'I_L4I':        [0,   73],
+    'I_L5E':        [0,   42],
+    'I_L5I':        [0,   35],
+    'I_L6E':        [0,   61],
+    'I_L6I':        [0,   23],
+}
+
 theta = np.transpose([
     np.random.uniform(0,   42,    size=args.num_simulations),  # I_L23E
     np.random.uniform(0,   35,    size=args.num_simulations),  # I_L23I
@@ -89,3 +100,5 @@ if rank == 0:
 
     np.save(PATH + 'X.npy', X)
     keys = np.array(list(X[0]['theta'].keys()))
+    np.save(PATH + 'keys.npy', keys)
+    np.save(PATH + 'bounds.npy', bounds)
