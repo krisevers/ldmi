@@ -48,10 +48,10 @@ def F(E, theta={}, mode='Psi'):
         P[7, 0] = theta['P_L23EtoL6I']
     if 'P_L5EtoL23I' in theta:          # feedback deep to superficial inhibition
         P[1, 4] = theta['P_L5EtoL23I']
-    if 'P_L6E_L4I' in theta:            # feedback deep to granular inhibition
-        P[3, 6] = theta['P_L6E_L4I']
-    if 'P_L5E_L6E' in theta:            # feedforward deep to deep excitation
-        P[6, 4] = theta['P_L5E_L6E']
+    if 'P_L6EtoL4I' in theta:            # feedback deep to granular inhibition
+        P[3, 6] = theta['P_L6EtoL4I']
+    if 'P_L5EtoL6E' in theta:            # feedforward deep to deep excitation
+        P[6, 4] = theta['P_L5EtoL6E']
     
     # N = get_N(E['area'])                                                # number of neurons in each population
     N = np.array( [20683,  5834,   21915,  5479,   4850,   1065,   14395,  2948  ])
@@ -217,7 +217,7 @@ def F(E, theta={}, mode='Psi'):
 
     lbr_model = LBR(K, theta)
     
-    B_k, _, _ = lbr_model.sim(F_k, K)    # BOLD signal at each cortical depth
+    B_k, _, Y = lbr_model.sim(F_k, K)    # BOLD signal at each cortical depth
 
     # downsample BOLD signal to match voxel space
     num_voxels = 3
@@ -262,7 +262,7 @@ def F(E, theta={}, mode='Psi'):
     Psi['downslope_d_k'] = np.diff(Psi['downslope_k'])
 
     if mode == 'full':
-        return Psi, X, S, F_l, F_k, B_k, B_v
+        return Psi, X, S, F_l, F_k, B_k, B_v, Y
     
     if mode == 'betas':
         import IPython; IPython.embed()
