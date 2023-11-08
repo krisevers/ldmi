@@ -47,7 +47,7 @@ for i in range(num_conditions):
             'lam_I': 0
             }
 
-    Psi, _, _, _, _, B_k, _ = F(E, theta, test=True)  # forward model
+    Psi, X, S, F_l, F_k, B_k, B_v, Y = F(E, theta, mode='full')  # forward model
 
     # cast to float32
     B_k = B_k.astype(np.float32)
