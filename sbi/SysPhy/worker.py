@@ -6,7 +6,9 @@ from scipy import signal
 from utils import get_L2K, get_N, HRF
 from LBR import LBR
 
-def F(E, theta={}, mode='Psi'):
+import time
+
+def F(E, theta={}, mode='Psi', integrator='numpy'):
     """
     Black-Box forward model for the DMF, NVC and LBR models
 
@@ -131,12 +133,61 @@ def F(E, theta={}, mode='Psi'):
     def func(x):
         return (a*x-b) / (1 + np.exp(-d * (a*x-b)))
 
-    for t in range(1, T):
-        X_dot = (-X[t-1]/tau_s + np.dot(G, func(Y[t-1])) + U[t-1] + W_bg*nu_bg)
-        Y_dot = (-Y[t-1] + R*X[t-1]) / tau_m
+    start_time = time.time()
+    if integrator == 'numpy':
+        # running simulation with numpy
+        for t in range(1, T):
+            X_dot = (-X[t-1]/tau_s + np.dot(G, func(Y[t-1])) + U[t-1] + W_bg*nu_bg)
+            Y_dot = (-Y[t-1] + R*X[t-1]) / tau_m
 
-        X[t] = X[t-1] + dt_DMF * X_dot
-        Y[t] = Y[t-1] + dt_DMF * Y_dot
+            X[t] = X[t-1] + dt_DMF * X_dot
+            Y[t] = Y[t-1] + dt_DMF * Y_dot
+
+    elif integrator == 'numba':
+        # running simulation with numba
+        from numba import jit
+        @jit(nopython=True)
+        def func(x):
+            return (a*x-b) / (1 + np.exp(-d * (a*x-b)))
+
+        @jit(nopython=True)
+        def F(X, Y, U, W_bg, nu_bg, G, func, tau_s, tau_m, R, dt_DMF, T):
+            for t in range(1, T):
+                X_dot = (-X[t-1]/tau_s + np.dot(G, func(Y[t-1])) + U[t-1] + W_bg*nu_bg)
+                Y_dot = (-Y[t-1] + R*X[t-1]) / tau_m
+
+                X[t] = X[t-1] + dt_DMF * X_dot
+                Y[t] = Y[t-1] + dt_DMF * Y_dot
+
+            return X, Y
+
+        X, Y = F(X, Y, U, W_bg, nu_bg, G, func, tau_s, tau_m, R, dt_DMF, T)
+
+    elif integrator == 'C++':
+        # running simulation in C++
+        import os
+        import sys
+        # add path to the C++ library (two levels up)
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.getcwd())))
+        from ldmi.models.DMF import Sim
+        y0 = np.zeros((M, 4), dtype=float)
+        SIM = Sim(dt=dt_DMF, t_sim=E['T'], y=list(y0), sigma=0.0, 
+                                                 tau_s=tau_s, 
+                                                 tau_m=tau_m, 
+                                                 C_m=C_m, 
+                                                 kappa=list(np.zeros(M)), 
+                                                 tau_a=0, 
+                                                 a=a, b=b, d=d, 
+                                                 nu_bg=nu_bg, W_bg=list(W_bg), 
+                                                 nu_ext=list(U.T), W_ext=list(np.ones(M)), 
+                                                 W=list(G))
+        # Integrate the DMF equations
+        SIM.integrate('euler')
+        X = SIM.get_states()
+        X = np.asarray(X)[:, :, 0]
+
+    time_elapsed = time.time() - start_time
+    print('DMF | {} integration time: {} s'.format(integrator, time_elapsed))
 
     # neural signal from excitatory and inhibitory populations
     if 'lam_E' in theta:
@@ -174,25 +225,57 @@ def F(E, theta={}, mode='Psi'):
 
     dt_NVC = 1e-4
 
-    a_x = np.zeros(L)
-    a_y = np.zeros(L)
-    f_x = np.zeros(L)
-    f_y = np.zeros(L)
+    start_time = time.time()
 
-    F_l = np.zeros((T, L))
+    if integrator == 'numpy':
+        a_x = np.zeros(L)
+        a_y = np.zeros(L)
+        f_x = np.zeros(L)
+        f_y = np.zeros(L)
 
-    for t in range(T):
-        f_x = np.exp(f_x)
-        a_dot = S[t] - c1*a_x
-        f_dot = c2*a_x - c3*(f_x-1)
+        F_l = np.zeros((T, L))
+        for t in range(T):
+            f_x = np.exp(f_x)
+            a_dot = S[t] - c1*a_x
+            f_dot = c2*a_x - c3*(f_x-1)
 
-        a_y = a_y + dt_NVC * a_dot
-        f_y = f_y + dt_NVC * (f_dot / f_x)
+            a_y = a_y + dt_NVC * a_dot
+            f_y = f_y + dt_NVC * (f_dot / f_x)
 
-        a_x = a_y 
-        f_x = f_y
+            a_x = a_y 
+            f_x = f_y
 
-        F_l[t] = np.exp(f_y)        # cerebral blood flow at each cortical layer
+            F_l[t] = np.exp(f_y)        # cerebral blood flow at each cortical layer
+
+    elif integrator == 'numba':
+        @jit(nopython=True)
+        def F(S, c1, c2, c3, dt_NVC, T):
+            a_x = np.zeros(L)
+            a_y = np.zeros(L)
+            f_x = np.zeros(L)
+            f_y = np.zeros(L)
+
+            F_l = np.zeros((T, L))
+
+            for t in range(T):
+                f_x = np.exp(f_x)
+                a_dot = S[t] - c1*a_x
+                f_dot = c2*a_x - c3*(f_x-1)
+
+                a_y = a_y + dt_NVC * a_dot
+                f_y = f_y + dt_NVC * (f_dot / f_x)
+
+                a_x = a_y 
+                f_x = f_y
+
+                F_l[t] = np.exp(f_y)        # cerebral blood flow at each cortical layer
+
+            return F_l
+
+        F_l = F(S, c1, c2, c3, dt_NVC, T)
+
+    time_elapsed = time.time() - start_time
+    print('NVC | {} integration time: {} s'.format(integrator, time_elapsed))
 
 
     ##########################################################################################
@@ -217,7 +300,17 @@ def F(E, theta={}, mode='Psi'):
 
     lbr_model = LBR(K, theta)
     
-    B_k, _, Y = lbr_model.sim(F_k, K)    # BOLD signal at each cortical depth
+    start_time = time.time()
+
+    if integrator == 'numpy':
+        B_k, _, Y = lbr_model.sim(F_k, K)    # BOLD signal at each cortical depth
+
+    elif integrator == 'numba':
+        B_k, _, Y = lbr_model.sim(F_k, K)    # BOLD signal at each cortical depth
+
+    time_elapsed = time.time() - start_time
+    print('LBR | {} integration time: {} s'.format(integrator, time_elapsed))
+
 
     # downsample BOLD signal to match voxel space
     num_voxels = 3

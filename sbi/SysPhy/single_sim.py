@@ -12,7 +12,7 @@ theta = {'a': 48, 'b': 981, 'd': 8.9e-3, 'tau_m': 10e-3, 'tau_s': .5e-3, 'C_m': 
 
 E = {'K': 22, 'area': 'V1', 'T': 50, 'onset': 10, 'offset': 20}   # experimental parameters
 
-Psi, X, S, F_l, F_k, B_k, B_v = F(E, theta, test=True)  # forward model
+Psi, X, S, F_l, F_k, B_k, B_v, Y = F(E, theta, mode='full', integrator='numba')  # forward model
 
 # casting to float32
 X = X.astype(np.float32)
@@ -48,49 +48,5 @@ plt.imshow(B_v.T, aspect='auto', cmap='Reds', interpolation='none')
 plt.yticks(np.arange(3), ['Superficial', 'Granular', 'Deep'])
 plt.colorbar()
 plt.tight_layout(pad=1)
-plt.savefig('pdf/ff_L4.pdf', format='pdf', dpi=1200)
-
-# plot Psi observables
-plt.figure(figsize=(7, 7))
-plt.subplot(5, 1, 1)
-plt.title(r'Peak position ($\Psi_{peak\_pos}$)')
-plt.plot(Psi['peak_pos'])
-plt.subplot(5, 1, 2)
-plt.title(r'Peak amplitude ($\Psi_{peak\_amp}$)')
-plt.plot(Psi['peak_amp'])
-plt.subplot(5, 1, 3)
-plt.title(r'Area under the curve ($\Psi_{area}$)')
-plt.plot(Psi['area'])
-plt.subplot(5, 1, 4)
-plt.title(r'Upslope ($\Psi_{upslope}$)')
-plt.plot(Psi['upslope'])
-plt.subplot(5, 1, 5)
-plt.title(r'Downslope ($\Psi_{downslope}$)')
-plt.plot(Psi['downslope'])
-plt.tight_layout(pad=1)
-plt.savefig('pdf/ff_L4_Psi.pdf', format='pdf', dpi=1200)
-
-plt.figure(figsize=(7, 7))
-peaks_S = np.max(S, axis=0)
-plt.barh(width=peaks_S, y=np.arange(4), linewidth=2, color='black')
-plt.xticks([])
-plt.yticks([])
-plt.gca().invert_yaxis()
-plt.axis('off')
-plt.savefig('pdf/ff_L4_S.pdf', format='pdf', dpi=1200)
-
-plt.figure(figsize=(7, 7))
-peaks_F_k = np.max(F_k, axis=0)
-plt.plot(peaks_F_k, np.arange(1, E['K']+1), linewidth=2, color='black')
-plt.xticks([])
-plt.yticks([])
-plt.axis('off')
-plt.savefig('pdf/ff_L4_F_k.pdf', format='pdf', dpi=1200)
-
-plt.figure(figsize=(7, 7))
-peaks = np.max(B_k, axis=0)
-plt.plot(peaks, np.arange(1, E['K']+1), linewidth=2, color='black')
-plt.xticks([])
-plt.yticks([])
-plt.axis('off')
-plt.savefig('pdf/ff_L4_B_k.pdf', format='pdf', dpi=1200)
+# plt.savefig('pdf/ff_L4.pdf', format='pdf', dpi=1200)
+plt.show()

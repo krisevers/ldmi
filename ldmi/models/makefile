@@ -3,7 +3,7 @@ CXXFLAGS = -std=c++11 -fopenmp -O2 -fPIC -c
 SWIGFLAGS = -c++ -python -shadow
 
 # location of Python header files
-PYTHON_VERSION = 3.8
+PYTHON_VERSION = 3.10
 PYTHON_INCLUDE = /usr/include/python$(PYTHON_VERSION)
 
 all: _Lorenz.so _DMF.so _DMF_OU.so

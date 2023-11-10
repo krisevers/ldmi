@@ -104,7 +104,7 @@ L = Sim(dt=dt,
         progress=False)
 
 # Integrate the Lorenz equations
-L.integrate('euler')
+L.integrate('rk4')
 T = L.get_times()
 X = L.get_states()
 

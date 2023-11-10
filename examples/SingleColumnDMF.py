@@ -42,16 +42,17 @@ nu_bg = 8.
 K_bg  = np.array([1600, 1500, 2100, 1900, 2000, 1900, 2900, 2100])
 W_bg  = K_bg * J_E
 
-nu_ext = np.zeros(M)
-W_ext  = np.zeros(M, dtype=float)
-
-
 kappa = [0., 0., 0., 0., 0., 0., 0., 0.]
 
 y0 = np.zeros((M, 4), dtype=float)
 
-t_sim = 80
+t_sim = 50
 dt = 1e-4
+
+nu_ext = np.zeros((M, int(t_sim/dt)), dtype=float)
+nu_ext[2, int(10/dt):int(20/dt)] = 0.0983 * 902 * 18 * J_E
+nu_ext[3, int(10/dt):int(20/dt)] = 0.0619 * 902 * 18 * J_E
+W_ext  = np.ones(M, dtype=float)
 
 L = Sim(dt=dt, t_sim=t_sim, y=list(y0), sigma=sigma, tau_s=tau_s, tau_m=tau_m, C_m=C_m, kappa=list(kappa), tau_a=tau_a, a=a, b=b, d=d, nu_bg=nu_bg, W_bg=list(W_bg), nu_ext=list(nu_ext), W_ext=list(W_ext), W=list(W))
 
@@ -82,3 +83,5 @@ plt.xlabel('Rate [Hz]')
 plt.ylabel('Population')
 plt.gca().invert_yaxis()
 plt.show()
+
+import IPython; IPython.embed()

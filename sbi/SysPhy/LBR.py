@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class LBR:
     def __init__(self, K, theta=None, cmro2=None):
         self.name = 'LBR'
@@ -108,6 +109,7 @@ class LBR:
         if 'R2s_p' not in theta:
             self.P['R2s_p']  = 90  # For blood (pial vein)
 
+  
     def sim(self, F, K, *args):
 
         if len(args) < 1:
@@ -350,10 +352,6 @@ class LBR:
 
             # change in deoxyhemoglobin content venules:
             dHb_v        = (m - f_v*Xk[:,1]/Xk[:,0])/t0v
-
-            # if t == 200:
-            #     import IPython
-            #     IPython.embed()
 
             # ASCENDING VEIN COMPARTMENTS:
             #--------------------------------------------------------------------------    
