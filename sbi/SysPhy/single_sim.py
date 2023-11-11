@@ -12,7 +12,7 @@ theta = {'a': 48, 'b': 981, 'd': 8.9e-3, 'tau_m': 10e-3, 'tau_s': .5e-3, 'C_m': 
 
 E = {'K': 22, 'area': 'V1', 'T': 50, 'onset': 10, 'offset': 20}   # experimental parameters
 
-Psi, X, S, F_l, F_k, B_k, B_v, Y = F(E, theta, mode='full', integrator='numba')  # forward model
+Psi, X, S, F_l, F_k, B_k, B_v, Y = F(E, theta, mode='full', integrator='numpy')  # forward model
 
 # casting to float32
 X = X.astype(np.float32)

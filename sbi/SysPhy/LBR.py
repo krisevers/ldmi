@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class LBR:
     def __init__(self, K, theta=None, cmro2=None):
         self.name = 'LBR'
@@ -109,7 +108,6 @@ class LBR:
         if 'R2s_p' not in theta:
             self.P['R2s_p']  = 90  # For blood (pial vein)
 
-  
     def sim(self, F, K, *args):
 
         if len(args) < 1:
@@ -325,9 +323,8 @@ class LBR:
 
         ##
         # Simulation
-        #------------------------------------------------------
+        #------------------------------------------------------            
         for t in range(t_steps):
-
             Xk      = np.exp(Xk)    # log-normal transformation (Stephan et al.(2008), NeuroImage)
             Xp      = np.exp(Xp)
             
@@ -406,7 +403,7 @@ class LBR:
             tau_v     = tau_v_in
             tau_d     = tau_d_in
             tau_p     = tau_p_in
-        
+
             # check for deflation (negative derivative)
             tau_v[dv_v<0]  = tau_v_de[dv_v<0]
             tau_d[dv_d<0]  = tau_d_de[dv_d<0]
@@ -444,8 +441,6 @@ class LBR:
             
             LBRpial[t,:] = H0p*((1-V0pq)*(k1p*V0pq*(1-q_p)) + k2p*V0pq*(1-q_p/v_p) +
                                                             k3p*V0pq*(1-v_p))*100
-            
-
 
         # save baseline physiological parameters
         Y['F0v']  = F0v

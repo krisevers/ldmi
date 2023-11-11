@@ -151,7 +151,7 @@ def F(E, theta={}, mode='Psi', integrator='numpy'):
             return (a*x-b) / (1 + np.exp(-d * (a*x-b)))
 
         @jit(nopython=True)
-        def F(X, Y, U, W_bg, nu_bg, G, func, tau_s, tau_m, R, dt_DMF, T):
+        def DMF(X, Y, U, W_bg, nu_bg, G, func, tau_s, tau_m, R, dt_DMF, T):
             for t in range(1, T):
                 X_dot = (-X[t-1]/tau_s + np.dot(G, func(Y[t-1])) + U[t-1] + W_bg*nu_bg)
                 Y_dot = (-Y[t-1] + R*X[t-1]) / tau_m
@@ -161,7 +161,7 @@ def F(E, theta={}, mode='Psi', integrator='numpy'):
 
             return X, Y
 
-        X, Y = F(X, Y, U, W_bg, nu_bg, G, func, tau_s, tau_m, R, dt_DMF, T)
+        X, Y = DMF(X, Y, U, W_bg, nu_bg, G, func, tau_s, tau_m, R, dt_DMF, T)
 
     elif integrator == 'C++':
         # running simulation in C++
@@ -249,7 +249,7 @@ def F(E, theta={}, mode='Psi', integrator='numpy'):
 
     elif integrator == 'numba':
         @jit(nopython=True)
-        def F(S, c1, c2, c3, dt_NVC, T):
+        def NVC(S, c1, c2, c3, dt_NVC, T):
             a_x = np.zeros(L)
             a_y = np.zeros(L)
             f_x = np.zeros(L)
@@ -272,7 +272,7 @@ def F(E, theta={}, mode='Psi', integrator='numpy'):
 
             return F_l
 
-        F_l = F(S, c1, c2, c3, dt_NVC, T)
+        F_l = NVC(S, c1, c2, c3, dt_NVC, T)
 
     time_elapsed = time.time() - start_time
     print('NVC | {} integration time: {} s'.format(integrator, time_elapsed))
@@ -296,17 +296,18 @@ def F(E, theta={}, mode='Psi', integrator='numpy'):
     # Laminar BOLD Response (LBR)
     dt_LBR = 0.001
 
-    F_k = F_k[::int(dt_LBR/dt_NVC)]    # downsample to match LBR sampling rate
-
-    lbr_model = LBR(K, theta)
-    
+    F_k = F_k[::int(dt_LBR/dt_NVC)]    # downsample to match LBR sampling rate    
     start_time = time.time()
 
+    lbr_model = LBR(K, theta)
     if integrator == 'numpy':
         B_k, _, Y = lbr_model.sim(F_k, K)    # BOLD signal at each cortical depth
 
     elif integrator == 'numba':
-        B_k, _, Y = lbr_model.sim(F_k, K)    # BOLD signal at each cortical depth
+        from LBR_numba import LBRparams, LBRinit, LBRsim
+        lbr_params = LBRparams(K, theta)
+        LBRarrays = LBRinit(K, lbr_params)
+        B_k, _, Y = LBRsim(F_k, K, lbr_params, LBRarrays)
 
     time_elapsed = time.time() - start_time
     print('LBR | {} integration time: {} s'.format(integrator, time_elapsed))
