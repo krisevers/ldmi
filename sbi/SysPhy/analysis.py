@@ -26,25 +26,26 @@ theta_test = np.load(PATH + 'theta_test.npy')
 
 num_samples = 10000
 
-perm_idx = 100
+perm_idx = 200
 posterior.set_default_x(psi_test[perm_idx])
 posterior_samples = posterior.sample((num_samples,))
 
 from view import pairplot, marginal_correlation, marginal
 
 keys = np.load(PATH + 'keys.npy', allow_pickle=True)
+bounds = np.load(PATH + 'bounds.npy', allow_pickle=True)
 
 # check if directory exists
 if not os.path.exists('pdf/' + args.name + '/'):
     os.makedirs('pdf/' + args.name + '/')
 
-fig, ax = pairplot(posterior_samples, labels=keys)
+fig, ax = pairplot(posterior_samples, labels=keys, bounds=bounds)
 plt.savefig('pdf/' + args.name + '/pairplot.pdf', dpi=300)
 
 fig, ax = marginal_correlation(posterior_samples, labels=keys, figsize=(10, 10))
 plt.savefig('pdf/' + args.name + '/marginal_correlation.pdf', dpi=300)
 
-fig, ax = marginal(posterior_samples, labels=keys, figsize=(8, 12))
+fig, ax = marginal(posterior_samples, labels=keys, bounds=bounds, figsize=(8, 12))
 for i in range(len(keys)):
     ax[i].axvline(theta_test[perm_idx][i], color='r', linestyle='--')
 plt.savefig('pdf/' + args.name + '/marginal.pdf', dpi=300)

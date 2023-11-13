@@ -42,27 +42,25 @@ size = comm.Get_size()
 
 E = {'K': 12, 'area': 'V1', 'T': 15, 'onset': 1, 'offset': 10}   # experimental parameters
 
-bounds = {
-    'I_L23E':       [0,   42],
-    'I_L23I':       [0,   35],
-    'I_L4E':        [0,   116],
-    'I_L4I':        [0,   73],
-    'I_L5E':        [0,   42],
-    'I_L5I':        [0,   35],
-    'I_L6E':        [0,   61],
-    'I_L6I':        [0,   23],
-}
+bounds = [
+    [0,   42],
+    [0,   35],
+    [0,   116],
+    [0,   73],
+    [0,   42],
+    [0,   35],
+    [0,   61],
+    [0,   23],
+]
 
-theta = np.transpose([
-    np.random.uniform(0,   42,    size=args.num_simulations),  # I_L23E
-    np.random.uniform(0,   35,    size=args.num_simulations),  # I_L23I
-    np.random.uniform(0,   116,   size=args.num_simulations),  # I_L4E
-    np.random.uniform(0,   73,    size=args.num_simulations),  # I_L4I
-    np.random.uniform(0,   42,    size=args.num_simulations),  # I_L5E
-    np.random.uniform(0,   35,    size=args.num_simulations),  # I_L5I
-    np.random.uniform(0,   61,    size=args.num_simulations),  # I_L6E
-    np.random.uniform(0,   23,    size=args.num_simulations),  # I_L6I
-])
+# for each simulation set two random parameters to non-zero
+theta = np.zeros((args.num_simulations, 8))
+choice = np.random.choice([0, 1, 2, 3, 4, 5, 6, 7], size=(args.num_simulations, 2), replace=True)
+# make sure that the two random parameters are not the same
+for i in range(args.num_simulations):
+    theta[i, choice[i, 0]] = np.random.uniform(bounds[choice[i, 0]][0], bounds[choice[i, 0]][1])
+    theta[i, choice[i, 1]] = np.random.uniform(bounds[choice[i, 1]][0], bounds[choice[i, 1]][1])
+
 
 params_per_worker = np.array_split(theta, comm.Get_size())
 num_simulations_per_worker = int(args.num_simulations / size)
@@ -81,7 +79,7 @@ for i in tqdm.tqdm(range(num_simulations_per_worker), disable=not rank==0):
         'I_L6E':        worker_params[i, 6],
         'I_L6I':        worker_params[i, 7],
     }
-    Psi_i = F(E, theta_i)
+    Psi_i = F(E, theta_i, integrator='numba')
     X_i = {"Psi": Psi_i, "theta": theta_i}
     peak_amp_v = X_i['Psi']['peak_amp_v']
     peak_amp_k = X_i['Psi']['peak_amp_k']
@@ -90,6 +88,9 @@ for i in tqdm.tqdm(range(num_simulations_per_worker), disable=not rank==0):
         'peak_amp_k': peak_amp_k,
     }
     X.append(X_i)
+
+    if rank == 0:
+        print('{}/{}'.format(i+1, num_simulations_per_worker), end='\r')
 
 # gather results
 X = comm.allgather(X)

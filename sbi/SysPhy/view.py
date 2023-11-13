@@ -1,7 +1,7 @@
 import numpy as np
 import pylab as plt
 
-def pairplot(samples, labels=None, figsize=(10, 10)):
+def pairplot(samples, labels=None, figsize=(10, 10), bounds=None):
     """
     Create a pairplot from samples.
     """
@@ -18,11 +18,16 @@ def pairplot(samples, labels=None, figsize=(10, 10)):
                 ax[i, j].hist(np.array(samples[:, i]), bins=50, density=True, histtype="step", color="black")
                 ax[i, j].set_xlabel(labels[j])
                 ax[i, j].set_ylabel(labels[i])
+                if bounds is not None:
+                    ax[i, j].set_xlim(bounds[i])
                 ax[i, j].set_yticks([])
             if (i < j):
                 ax[i, j].hist2d(np.array(samples[:, j]), np.array(samples[:, i]), bins=50, cmap="Reds")
                 ax[i, j].set_xlabel(labels[j])
                 ax[i, j].set_ylabel(labels[i])
+                if bounds is not None:
+                    ax[i, j].set_xlim(bounds[j])
+                    ax[i, j].set_ylim(bounds[i])
                 ax[i, j].set_xticks([])
                 ax[i, j].set_yticks([])
             if (i > j):
@@ -30,7 +35,7 @@ def pairplot(samples, labels=None, figsize=(10, 10)):
 
     return fig, ax
 
-def marginal(samples, labels=None, limits=None, figsize=(8, 12)):
+def marginal(samples, labels=None, bounds=None, figsize=(8, 12)):
     """
     Create a marginal plot from samples.
     """
@@ -42,10 +47,10 @@ def marginal(samples, labels=None, limits=None, figsize=(8, 12)):
     fig, ax = plt.subplots(num_dims, 1, figsize=figsize)
     plt.suptitle(r'p($\theta | x$)', fontsize=20)
     for i in range(num_dims):
-        if limits is None:
+        if bounds is None:
             ax[i].hist(np.array(samples[:, i]), bins=50, density=True, histtype="step", color="black")
         else:   
-            ax[i].hist(np.array(samples[:, i]), bins=50, density=True, histtype="step", color="black", range=limits[i])
+            ax[i].hist(np.array(samples[:, i]), bins=50, density=True, histtype="step", color="black", range=bounds[i])
         ax[i].set_xlabel(labels[i])
         ax[i].set_ylabel(r"$p(\theta_{} | x)$".format({i}))
         ax[i].set_yticks([])
@@ -54,7 +59,7 @@ def marginal(samples, labels=None, limits=None, figsize=(8, 12)):
 
     return fig, ax
 
-def marginal_correlation(samples, labels=None, figsize=(10, 10)):
+def marginal_correlation(samples, labels=None, figsize=(10, 10), bounds=None):
     """
     Create a marginal correlation matrix
     """

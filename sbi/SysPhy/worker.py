@@ -8,7 +8,7 @@ from LBR import LBR
 
 import time
 
-def F(E, theta={}, mode='Psi', integrator='numpy'):
+def F(E, theta={}, mode='Psi', integrator='numpy', verbose=False):
     """
     Black-Box forward model for the DMF, NVC and LBR models
 
@@ -187,7 +187,8 @@ def F(E, theta={}, mode='Psi', integrator='numpy'):
         X = np.asarray(X)[:, :, 0]
 
     time_elapsed = time.time() - start_time
-    print('DMF | {} integration time: {} s'.format(integrator, time_elapsed))
+    if verbose:
+        print('DMF | {} integration time: {} s'.format(integrator, time_elapsed))
 
     # neural signal from excitatory and inhibitory populations
     if 'lam_E' in theta:
@@ -275,7 +276,8 @@ def F(E, theta={}, mode='Psi', integrator='numpy'):
         F_l = NVC(S, c1, c2, c3, dt_NVC, T)
 
     time_elapsed = time.time() - start_time
-    print('NVC | {} integration time: {} s'.format(integrator, time_elapsed))
+    if verbose:
+        print('NVC | {} integration time: {} s'.format(integrator, time_elapsed))
 
 
     ##########################################################################################
@@ -300,17 +302,11 @@ def F(E, theta={}, mode='Psi', integrator='numpy'):
     start_time = time.time()
 
     lbr_model = LBR(K, theta)
-    if integrator == 'numpy':
-        B_k, _, Y = lbr_model.sim(F_k, K)    # BOLD signal at each cortical depth
-
-    elif integrator == 'numba':
-        from LBR_numba import LBRparams, LBRinit, LBRsim
-        lbr_params = LBRparams(K, theta)
-        LBRarrays = LBRinit(K, lbr_params)
-        B_k, _, Y = LBRsim(F_k, K, lbr_params, LBRarrays)
+    B_k, _, Y = lbr_model.sim(F_k, K, integrator)    # BOLD signal at each cortical depth
 
     time_elapsed = time.time() - start_time
-    print('LBR | {} integration time: {} s'.format(integrator, time_elapsed))
+    if verbose:
+        print('LBR | {} integration time: {} s'.format(integrator, time_elapsed))
 
 
     # downsample BOLD signal to match voxel space
