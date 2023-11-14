@@ -54,7 +54,7 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--path',    default='data/', help='Set data path')
     parser.add_argument('-n', '--name',                     help='Name of experiment')
-    parser.add_argument('-t', '--threads', default=1,       help='Number of threads to use for training')
+    parser.add_argument('-t', '--threads', default=1,       help='Number of threads to use for training', type=int)
     parser.add_argument('-m', '--method',  default='SNPE',  help='Inference method')
     parser.add_argument('-d', '--device',  default='cpu',   help='Device to use for training')
     parser.add_argument('-s', '--seed',    default=0,       help='Random seed')
@@ -69,7 +69,7 @@ if __name__=="__main__":
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
-    # load data
+    print("Loading data from {}".format(PATH))
     X = np.load(PATH + 'X.npy', allow_pickle=True)
 
     num_simulations = len(X)

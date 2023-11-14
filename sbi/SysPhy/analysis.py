@@ -24,10 +24,28 @@ posterior = torch.load(PATH + 'posterior.pt')
 psi_test = np.load(PATH + 'psi_test.npy')
 theta_test = np.load(PATH + 'theta_test.npy')
 
-num_samples = 10000
+num_samples = 100000
 
-perm_idx = 200
+perm_idx = 2
 posterior.set_default_x(psi_test[perm_idx])
+posterior_samples = posterior.sample((num_samples,))
+
+# Chen et al. (2013)
+chen2013 = np.array([
+                0.40954222493225806,
+                0.4522709412773616, 
+                0.5854525415825667, 
+                0.6300105321851186, 
+                0.4614955702868471, 
+                0.4238112162880406, 
+                0.41772667838358674,
+                0.29562506725273
+            ])
+from scipy.interpolate import interp1d
+f = interp1d(np.arange(0, 8), chen2013, kind='cubic')
+chen2013 = f(np.linspace(0, 7, 12))
+
+posterior.set_default_x(chen2013)
 posterior_samples = posterior.sample((num_samples,))
 
 from view import pairplot, marginal_correlation, marginal

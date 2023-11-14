@@ -24,9 +24,9 @@ parser.add_argument("--name",            type=str,                  help='name o
 args = parser.parse_args()
 
 """
-Explore systemic parameters (i.e. parameters that are not related to neurovascular coupling or hemodynamics).
+Explore physiological parameters (i.e. parameters that are not related to neurovascular coupling or hemodynamics).
 
-experiment sys_I: explore input currents to each population
+experiment phy: explore input currents to each population
 """
 
 PATH = args.path + args.name + '/'
@@ -40,7 +40,7 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-E = {'K': 12, 'area': 'V1', 'T': 15, 'onset': 1, 'offset': 10}   # experimental parameters
+E = {'K': 12, 'area': 'V1', 'T': 30, 'onset': 1, 'offset': 10}   # experimental parameters
 
 bounds = [
     [0,   42],
@@ -55,12 +55,12 @@ bounds = [
 
 # for each simulation set two random parameters to non-zero
 theta = np.zeros((args.num_simulations, 8))
+num_choices = np.random.randint(1, 8, size=args.num_simulations)
 # make sure that the two random parameters are not the same
 for i in range(args.num_simulations):
-    for j in range(4):
-        activate = np.random.uniform(0, 1)
-        theta[i, j*2]   = bounds[j*2][1]*activate
-        theta[i, j*2+1] = bounds[j*2+1][1]*activate
+    choice = np.random.choice([0, 1, 2, 3, 4, 5, 6, 7], size=num_choices[i], replace=False)
+    for j in range(num_choices[i]):
+        theta[i, choice[j]] = np.random.uniform(bounds[choice[j]][0], bounds[choice[j]][1])
 
 params_per_worker = np.array_split(theta, comm.Get_size())
 num_simulations_per_worker = int(args.num_simulations / size)
@@ -103,3 +103,4 @@ if rank == 0:
     keys = np.array(list(X[0]['theta'].keys()))         
     np.save(PATH + 'keys.npy', keys)                    # parameter names
     np.save(PATH + 'bounds.npy', bounds)                # bounds of parameters
+    np.save(PATH + 'num_choices.npy', num_choices)      # number of non-zero parameters per simulation
