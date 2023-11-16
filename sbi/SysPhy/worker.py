@@ -130,19 +130,6 @@ def F(E, theta={}, mode='Psi', integrator='numpy', verbose=False):
     else:
         d = 8.9e-3
 
-    def func(x):
-        return (a*x-b) / (1 + np.exp(-d * (a*x-b)))
-
-    start_time = time.time()
-    if integrator == 'numpy':
-        # running simulation with numpy
-        for t in range(1, T):
-            X_dot = (-X[t-1]/tau_s + np.dot(G, func(Y[t-1])) + U[t-1] + W_bg*nu_bg)
-            Y_dot = (-Y[t-1] + R*X[t-1]) / tau_m
-
-            X[t] = X[t-1] + dt_DMF * X_dot
-            Y[t] = Y[t-1] + dt_DMF * Y_dot
-
     elif integrator == 'numba':
         # running simulation with numba
         from numba import jit
@@ -163,32 +150,23 @@ def F(E, theta={}, mode='Psi', integrator='numpy', verbose=False):
 
         X, Y = DMF(X, Y, U, W_bg, nu_bg, G, func, tau_s, tau_m, R, dt_DMF, T)
 
-    elif integrator == 'C++':
-        # running simulation in C++
-        import os
-        import sys
-        # add path to the C++ library (two levels up)
-        sys.path.insert(0, os.path.dirname(os.path.dirname(os.getcwd())))
-        from ldmi.models.DMF import Sim
-        y0 = np.zeros((M, 4), dtype=float)
-        SIM = Sim(dt=dt_DMF, t_sim=E['T'], y=list(y0), sigma=0.0, 
-                                                 tau_s=tau_s, 
-                                                 tau_m=tau_m, 
-                                                 C_m=C_m, 
-                                                 kappa=list(np.zeros(M)), 
-                                                 tau_a=0, 
-                                                 a=a, b=b, d=d, 
-                                                 nu_bg=nu_bg, W_bg=list(W_bg), 
-                                                 nu_ext=list(U.T), W_ext=list(np.ones(M)), 
-                                                 W=list(G))
-        # Integrate the DMF equations
-        SIM.integrate('euler')
-        X = SIM.get_states()
-        X = np.asarray(X)[:, :, 0]
+        @jit(nopython=True)
+        def allCurrents(Y, G, U):
+            """
+            Compute all currents (synaptic, external)
+            """
+            num_currents = M**2 + M   # recurrent + external currents
+            I_all = np.zeros((num_currents, T))
+            for t in range(T):
+                I_all[:M**2, t] = np.ravel(G * funt(Y[t]))  # recurrent currents
+                I_all[M**2:, t] = U[t]                      # external currents
 
-    time_elapsed = time.time() - start_time
-    if verbose:
-        print('DMF | {} integration time: {} s'.format(integrator, time_elapsed))
+            return I_all
+
+        I_all = allCurrents(Y, G, U)    # obtain all currents
+
+    # assign currents to depth
+    I_k = I2K(I_all, E['K'], E['area'])
 
     # neural signal from excitatory and inhibitory populations
     if 'lam_E' in theta:

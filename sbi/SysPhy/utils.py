@@ -1,4 +1,18 @@
 import numpy as np
+from numba import jit
+
+def I2K(I, K, area='V1'):
+
+    num_sources = 8 # L23E L23I L4E L4I L5E L5I L6E L6I
+    num_targets = 8 # L23E L23I L4E L4I L5E L5I L6E L6I
+    num_layers  = 5 # L1 L23 L4 L5 L6
+
+    MAP = np.zeros((num_layers, num_targets, num_sources))
+    MAP[0, :, :] = np.array([[0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.50, 0.50],
+                              ]])
+
+
+    return I
 
 def get_L2K(K, L, area='V1'):
 
