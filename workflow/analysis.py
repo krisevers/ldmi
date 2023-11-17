@@ -30,7 +30,7 @@ hf.close()
 
 num_samples = 10000
 
-perm_idx = 14
+perm_idx = 0
 posterior.set_default_x(PSI_test[perm_idx])
 posterior_samples = posterior.sample((num_samples,))
 
@@ -52,8 +52,6 @@ for i in range(8):
 plt.savefig(PATH + 'pdf/marginal.pdf', dpi=300)
 
 plt.close('all')
-
-IPython.embed()
 
 # training performance on test set
 num_tests = PSI_test.shape[0]
