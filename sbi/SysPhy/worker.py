@@ -130,23 +130,22 @@ def F(E, theta={}, mode='Psi', integrator='numpy', verbose=False):
     else:
         d = 8.9e-3
 
-    elif integrator == 'numba':
-        # running simulation with numba
-        from numba import jit
-        @jit(nopython=True)
-        def func(x):
-            return (a*x-b) / (1 + np.exp(-d * (a*x-b)))
+    # running simulation with numba
+    from numba import jit
+    @jit(nopython=True)
+    def func(x):
+        return (a*x-b) / (1 + np.exp(-d * (a*x-b)))
 
-        @jit(nopython=True)
-        def DMF(X, Y, U, W_bg, nu_bg, G, func, tau_s, tau_m, R, dt_DMF, T):
-            for t in range(1, T):
-                X_dot = (-X[t-1]/tau_s + np.dot(G, func(Y[t-1])) + U[t-1] + W_bg*nu_bg)
-                Y_dot = (-Y[t-1] + R*X[t-1]) / tau_m
+    @jit(nopython=True)
+    def DMF(X, Y, U, W_bg, nu_bg, G, func, tau_s, tau_m, R, dt_DMF, T):
+        for t in range(1, T):
+            X_dot = (-X[t-1]/tau_s + np.dot(G, func(Y[t-1])) + U[t-1] + W_bg*nu_bg)
+            Y_dot = (-Y[t-1] + R*X[t-1]) / tau_m
 
-                X[t] = X[t-1] + dt_DMF * X_dot
-                Y[t] = Y[t-1] + dt_DMF * Y_dot
+            X[t] = X[t-1] + dt_DMF * X_dot
+            Y[t] = Y[t-1] + dt_DMF * Y_dot
 
-            return X, Y
+        return X, Y
 
         X, Y = DMF(X, Y, U, W_bg, nu_bg, G, func, tau_s, tau_m, R, dt_DMF, T)
 

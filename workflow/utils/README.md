@@ -1,0 +1,2 @@
+# Laminar Dynamic Model Inference Workflow
+This workflow provides a large dataset of laminar microcircuit simulations, mapping functions to tranform neuronal dynamics to hemodynamic and electrophysiological responses, and trained models to infer measurement statistics.
