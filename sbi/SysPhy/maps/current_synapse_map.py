@@ -102,7 +102,7 @@ if __name__ == '__main__':
     # replace nans with zeros
     PROB[np.isnan(PROB)] = 0
 
-    np.save('maps/recurrent_synapse_layer_prob.npy', PROB)
+    np.save('maps/current_synapse_map.npy', PROB)
 
     plt.figure()
     plt.imshow(tot_num_syn, interpolation='nearest', cmap='Reds')
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         plt.xticks(np.arange(num_layers), layers, rotation=90)
     plt.suptitle('Probability of synapse from source to target in layer')
     plt.tight_layout(pad=1)
-    plt.savefig('recurrent_synapse_layer_prob.png')
+    plt.savefig('current_synapse_map.png')
     plt.show() 
 
 

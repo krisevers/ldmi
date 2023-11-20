@@ -73,6 +73,9 @@ if __name__=="__main__":
     THETA   = np.array(hf.get('THETA'))
     bounds  = np.array(hf.get('bounds'))
     keys = np.array(hf.get('keys'))
+
+    PSI = np.array(hf.get('MAP'))
+
     hf.close()
 
     num_simulations = np.shape(THETA)[0]

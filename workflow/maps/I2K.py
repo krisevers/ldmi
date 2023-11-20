@@ -1,30 +1,21 @@
 import numpy as np
 import json
 
-if __name__=="__main__":
-
-    import pylab as plt
-    import IPython
-
-    # load recurrent synapse depth probabilities
-    PROB = np.load('maps/recurrent_synapse_layer_prob.npy')
-    num_sources = 8 # L23E L23I L4E L4I L5E L5I L6E L6I
-    num_targets = 8 # L23E L23I L4E L4I L5E L5I L6E L6I
-    num_layers  = 5 # L1 L23 L4 L5 L6
-
-    # load laminar thickness
-    species = 'macaque'
-    area = 'MT'
-
+def I2K(K, species, area, sigma=0):
     with open('maps/thickness.json', 'r') as f:
         DATA = json.load(f)
+
+    # load recurrent synapse depth probabilities
+    PROB = np.load('maps/current_synapse_map.npy')
+
+    # get number of sources and targets
+    num_sources = PROB.shape[2]
+    num_targets = PROB.shape[1]
 
     human, macaque = 0, 1
     V1, V2, V3, V3A, MT = 0, 1, 2, 3, 4
 
-    thickness = DATA['species'][macaque]['areas'][MT]['thickness']
-
-    K = 13
+    thickness = DATA['species'][macaque]['areas'][V1]['thickness']
 
     # get laminar boundaries
     norm_thickness = thickness / np.sum(thickness)
@@ -45,6 +36,33 @@ if __name__=="__main__":
     for k in range(K):
         if PROB_K[k].shape[0] > K:
             PROB_K[k] = np.interp(np.linspace(0, 1, K), np.linspace(0, 1, PROB_K[k].shape[0]), PROB_K[k])
+
+
+    if sigma != 0:
+        from scipy.ndimage import gaussian_filter1d
+        PROB_K_smooth = np.zeros_like(PROB_K)
+        for t in range(num_targets):
+            for s in range(num_sources):
+                PROB_K_smooth[:, t, s] = gaussian_filter1d(PROB_K[:, t, s], sigma=sigma)
+        PROB_K = PROB_K_smooth
+
+    return PROB_K
+    
+
+if __name__=="__main__":
+
+    import pylab as plt
+    import IPython
+
+    num_sources = 8 # L23E L23I L4E L4I L5E L5I L6E L6I
+    num_targets = 8 # L23E L23I L4E L4I L5E L5I L6E L6I
+    num_layers  = 5 # L1 L23 L4 L5 L6
+
+    K = 13
+    species = 'macaque'
+    area = 'V1'
+
+    PROB_K = I2K(K, species, area)
 
 
     # locations of population synapses

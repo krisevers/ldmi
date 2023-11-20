@@ -32,6 +32,9 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
+# wait for rank 0 to create file
+comm.Barrier()
+
 dt = 1e-4
 t_sim = 1
 T = int(t_sim / dt)
@@ -61,12 +64,13 @@ worker_params = params_per_worker[rank]
 DATA = []
 
 for i in tqdm.tqdm(range(num_simulations_per_worker)):
+    dt = 1e-4
     I_ext = np.zeros((T, M))
-    I_ext[1000:, :] = worker_params[i]
+    I_ext[int(0.6/dt):int(0.9/dt), :] = worker_params[i]
 
     _, _, I = DMF(I_ext, area=args.area)
 
-    PSI = np.mean(I[5000:], axis=0)
+    PSI = I[int(0.7/dt)]
     THETA = worker_params[i]
 
     DATA.append({'PSI': PSI, 'THETA': THETA})
