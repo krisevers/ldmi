@@ -1,4 +1,5 @@
 import numpy as np
+import h5py
 import json
 
 def I2K(K, species, area, sigma=0):
@@ -6,7 +7,9 @@ def I2K(K, species, area, sigma=0):
         DATA = json.load(f)
 
     # load recurrent synapse depth probabilities
-    PROB = np.load('maps/current_synapse_map.npy')
+    hf = h5py.File('maps/curr_syn_map.h5', 'r')
+    PROB = hf['MAP'][:]
+    hf.close()
 
     # get number of sources and targets
     num_sources = PROB.shape[2]
