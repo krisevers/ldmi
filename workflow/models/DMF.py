@@ -3,7 +3,7 @@ import json
 
 from numba import jit
 
-def DMF(I_ext, area='V1'):
+def DMF(I_th, I_cc, area='V1'):
     """
     DMF: Dynamic Mean Field
 
@@ -22,8 +22,8 @@ def DMF(I_ext, area='V1'):
     C_m   = 250e-6
     R     = tau_m / C_m
 
-    a = 48
-    b = 981
+    a = 48.
+    b = 981.
     d = 8.9e-3
 
     # connectivity parameters
@@ -44,7 +44,7 @@ def DMF(I_ext, area='V1'):
 
     C = np.log(1-P) / np.log(1 - 1/(N * N)) / N     # number of synapses
 
-    g = -4
+    g = -4.
     J_E = 87.8e-3
     J_I = J_E * g
 
@@ -52,25 +52,26 @@ def DMF(I_ext, area='V1'):
 
     C_bg = np.array([1600, 1500, 2100, 1900, 2000, 1900, 2900, 2100])   # number of background synapses
     G_bg = C_bg * J_E
-    nu_bg = 8
+    nu_bg = 8.
     I_bg = G_bg * nu_bg
 
-    I = np.zeros((T, M*M + M))  # all currents (recurrent + external)
-    X = np.zeros((T, M))        # synaptic current
-    Y = np.zeros((T, M))        # membrane potential
+    I = np.zeros((T, M*M + M*2), dtype=np.float32)    # all currents (recurrent + thalamic and cortico-cortical)
+    X = np.zeros((T, M),         dtype=np.float32)    # synaptic current
+    Y = np.zeros((T, M),         dtype=np.float32)    # membrane potential
 
     @jit(nopython=True)
     def func(x, a=a, b=b, d=d):
         return (a*x - b) / (1 - np.exp(-d*(a*x - b)))
     
     @jit(nopython=True)
-    def sim(X, Y, I, I_ext, I_bg, G, func, tau_s, tau_m, R, dt, T):
+    def sim(X, Y, I, I_th, I_cc, I_bg, G, func, tau_s, tau_m, R, dt, T, N):
         for t in range(1, T):
             # save currents (recurrent + external)
-            I[t, :M**2]     = np.ravel(G * func(Y[t-1]))
-            I[t, M**2:]     = I_ext[t-1] 
+            I[t, :M**2]         = np.ravel(G * func(Y[t-1]))    * np.repeat(N, M) * dt
+            I[t, M**2:M**2+M]   = I_th[t-1]                     * N * dt
+            I[t, M**2+M:]       = I_cc[t-1]                     * N * dt
             # update state variables
-            X_dot = (-X[t-1]/tau_s + np.dot(G, func(Y[t-1])) + I_ext[t-1] + I_bg)
+            X_dot = (-X[t-1]/tau_s + np.dot(G, func(Y[t-1])) + I_th[t-1] + I_cc[t-1] + I_bg)
             Y_dot = (-Y[t-1] + R*X[t-1]) / tau_m
 
             X[t] = X[t-1] + dt * X_dot
@@ -78,6 +79,6 @@ def DMF(I_ext, area='V1'):
 
         return X, Y, I
     
-    X, Y, I = sim(X, Y, I, I_ext, I_bg, G, func, tau_s, tau_m, R, dt, T)
+    X, Y, I = sim(X=X, Y=Y, I=I, I_th=I_th, I_cc=I_cc, I_bg=I_bg, G=G, func=func, tau_s=tau_s, tau_m=tau_m, R=R, dt=dt, T=T, N=N)
     
     return X, Y, I
