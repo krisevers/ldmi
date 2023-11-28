@@ -4,40 +4,44 @@ import pylab as plt
 
 from maps.I2K import I2K
 
-K = 13
-
-PROB_K = I2K(K, 'macaque', 'V1', sigma=1)
-
-# load current data
-with h5py.File('data/test/data.h5', 'r') as hf:
-    PSI     = hf['PSI'][:]
-    THETA   = hf['THETA'][:]
-    bounds  = hf['bounds'][:]
-    keys    = hf['keys'][:]
-hf.close()
-
-# flatten probabilities along last two dimensions
-PROB_K = PROB_K[:, 1:, 1:] # remove L1
-PROB_K = PROB_K.reshape((K, -1))
-
-PROB_K = PROB_K[:, :72]
-
-PSI_rec = PSI[:,   :64]
-PSI_cc  = PSI[:, 64:72]
-PSI_th  = PSI[:, 72:  ]
-
-PSI = np.concatenate((PSI_rec, PSI_cc, PSI_th), axis=1)
-
-E_map = np.zeros((K, 72))
-E_map[:, ::2] = 1
-E_map[:, 64:] = 1
+import argparse
 
 
-MAP = np.zeros((PSI.shape[0], K))
-for i in range(PSI.shape[0]):
-    MAP[i] = (PSI[i] @ (PROB_K * E_map).T)
+if __name__=="__main__":
 
-# save laminar projection
-with h5py.File('data/test/data.h5', 'a') as hf:
-    hf.create_dataset('MAP',     data=MAP)
-hf.close()
+    parser = argparse.ArgumentParser(description='Compute laminar projection from I to K.')
+    parser.add_argument('-p', '--path', type=str,   default='data', help='path to save results')
+    parser.add_argument('--name',       type=str,   default='test', help='Name of data file')
+    parser.add_argument('--K',          type=int,   default=21,     help='Number of cortical layers')
+    parser.add_argument('--sigma',      type=float, default=1,      help='Standard deviation of Gaussian kernel')
+    args = parser.parse_args()
+
+    PATH = args.path + '/' + args.name + '/'
+
+    K = args.K
+
+    PROB_K = I2K(K, 'macaque', 'V1', sigma=args.sigma)
+
+    # load current data
+    with h5py.File(PATH + 'data.h5', 'r') as hf:
+        PSI     = hf['PSI'][:]
+        THETA   = hf['THETA'][:]
+        bounds  = hf['bounds'][:]
+        keys    = hf['keys'][:]
+    hf.close()
+
+    # flatten probabilities along last two dimensions
+    PROB_K = np.array([np.concatenate((np.ravel(PROB_K[k, :, :8]), PROB_K[k, :, 8], PROB_K[k, :, 9])) for k in range(K)])
+
+    E_map = np.zeros((K, 80))
+    E_map[:, ::2] = 1
+    E_map[:, 64:] = 1
+
+    MAP = np.zeros((PSI.shape[0], K))
+    for i in range(PSI.shape[0]):
+        MAP[i] = (PSI[i] @ (PROB_K * E_map).T)
+
+    # save laminar projection
+    with h5py.File(PATH + 'data.h5', 'a') as hf:
+        hf.create_dataset('MAP',     data=MAP)
+    hf.close()

@@ -68,7 +68,7 @@ for i in tqdm.tqdm(range(num_simulations_per_worker)):
     I_ext = np.zeros((T, M))
     I_ext[int(0.6/dt):int(0.9/dt), :] = worker_params[i]
 
-    _, _, I = DMF(I_ext, area=args.area)
+    _, _, I = DMF(I_th=I_ext, I_cc=np.zeros((T, M)),  area=args.area)
 
     PSI = I[int(0.7/dt)]
     THETA = worker_params[i]
