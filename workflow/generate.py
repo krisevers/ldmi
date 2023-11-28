@@ -72,16 +72,18 @@ for i in tqdm.tqdm(range(num_simulations_per_worker)):
 
     PSI = I[int(0.7/dt)]
     THETA = worker_params[i]
+    BASELINE = I[int(0.5/dt)]
 
-    DATA.append({'PSI': PSI, 'THETA': THETA})
+    DATA.append({'PSI': PSI, 'THETA': THETA, 'BASELINE': BASELINE})
 
 DATA = comm.allgather(DATA)
 
 if rank == 0:
-    DATA    = np.ravel(DATA)
-    DATA    = np.array(DATA)
-    THETA   = np.array([DATA[i]['THETA'] for i in range(len(DATA))])
-    PSI     = np.array([DATA[i]['PSI']   for i in range(len(DATA))])
+    DATA     = np.ravel(DATA)
+    DATA     = np.array(DATA)
+    THETA    = np.array([DATA[i]['THETA']       for i in range(len(DATA))])
+    PSI      = np.array([DATA[i]['PSI']         for i in range(len(DATA))])
+    BASELINE = np.array([DATA[i]['BASELINE']    for i in range(len(DATA))])
 
     import os
     # check if path exists
@@ -89,9 +91,10 @@ if rank == 0:
         os.makedirs(PATH)
         
     hf = h5py.File(PATH + 'data.h5', 'w')
-    hf.create_dataset('PSI',    data=PSI)
-    hf.create_dataset('THETA',  data=THETA)
-    hf.create_dataset('bounds', data=bounds)
-    hf.create_dataset('keys',   data=keys)
+    hf.create_dataset('PSI',        data=PSI)
+    hf.create_dataset('THETA',      data=THETA)
+    hf.create_dataset('BASELINE',   data=BASELINE)
+    hf.create_dataset('bounds',     data=bounds)
+    hf.create_dataset('keys',       data=keys)
     hf.close()
 

@@ -160,3 +160,5 @@ sbi/data/*
 sbi/sbi-logs/*
 
 sbi/SysPhy/data/*
+
+workflow/data/*

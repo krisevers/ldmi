@@ -99,15 +99,3 @@ if args.quality:
         plt.xlabel('Uncertainty')
     plt.tight_layout()
     plt.savefig(PATH + 'pdf/uncertainty.pdf')
-
-    # present accuracy and uncertainty in a single bar plot with mean being the accuracy and the error bar being the uncertainty
-    colors = plt.tile(['b', 'r'], 4)
-    plt.figure(figsize=(10, 8))
-    plt.suptitle('Accuracy and uncertainty')
-    for i in range(8):
-        plt.subplot(4, 2, i+1)
-        plt.bar(1, accuracy[:, i].mean(), yerr=uncertainty[:, i].mean(), color=colors[i])
-        plt.ylim(0, np.max(accuracy.max() + uncertainty.max()))
-        plt.title(keys[i])
-    plt.tight_layout()
-    plt.savefig(PATH + 'pdf/accuracy_uncertainty.pdf')
