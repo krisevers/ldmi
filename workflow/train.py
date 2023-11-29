@@ -12,6 +12,14 @@ def train(num_simulations,
           method="SNPE",
           device="cpu",
           density_estimator="maf"):
+
+    if device == "cuda":
+        # check if GPU is available
+        if torch.cuda.is_available():
+            device = "cuda"
+        else:
+            print("Warning: CUDA GPU not available. Using CPU instead.")
+            device = "cpu"
     
     torch.set_num_threads(num_threads)
 
@@ -67,45 +75,56 @@ if __name__=="__main__":
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
+    # ratio to float
+    ratio = float(args.ratio)
+
     print("Loading data from {}...".format(PATH))
     hf = h5py.File(PATH + 'data.h5', 'r')
-    PSI     = np.array(hf.get('PSI'))
+    BETA    = np.array(hf.get('BETA'))
     THETA   = np.array(hf.get('THETA'))
     bounds  = np.array(hf.get('bounds'))
     keys = np.array(hf.get('keys'))
 
-    PSI = np.array(hf.get('MAP'))
-
     hf.close()
 
+    print("Number of simulations: {}".format(np.shape(THETA)[0]))
     num_simulations = np.shape(THETA)[0]
 
     THETA_torch = torch.from_numpy(THETA).float()
-    PSI_torch   = torch.from_numpy(PSI).float()
+    BETA_torch   = torch.from_numpy(BETA).float()
 
-    # split data into training and test set
+    print("Splitting data into training and test set...")
+    if (ratio > 1.0 or ratio < 0.0):
+        raise ValueError("Ratio must be between 0 and 1")
+    elif (num_simulations < ratio*100):
+        raise ValueError("Not enough simulations to split into training and test set")
+    elif (num_simulations < 10000):
+        print("Warning: Number of simulations is small. Consider using more simulations.")
     idx = np.random.permutation(num_simulations)
-    idx_train = idx[:int(args.ratio * num_simulations)]
-    idx_test  = idx[int(args.ratio * num_simulations):]
+    idx_train = idx[:int(ratio * num_simulations)]
+    idx_test  = idx[int(ratio * num_simulations):]
 
     THETA_train = THETA_torch[idx_train]
-    PSI_train   = PSI_torch[idx_train]
+    BETA_train   = BETA_torch[idx_train]
     THETA_test  = THETA_torch[idx_test]
-    PSI_test    = PSI_torch[idx_test]
+    BETA_test    = BETA_torch[idx_test]
 
+    print("Training {} on {} simulations...".format(args.method, num_simulations))
     posterior = train(num_simulations,
-                        PSI_train,
+                        BETA_train,
                         THETA_train,
                         num_threads         = args.threads,
                         method              = args.method,
                         device              = args.device,
-                        density_estimator   = "maf")
+                        density_estimator   = "maf",
+                        )
     
-    torch.save(posterior, PATH + 'posterior.pt')
 
+    print('Saving data...')
+    torch.save(posterior, PATH + 'posterior.pt')
     hf = h5py.File(PATH + 'data.h5', 'a')
     hf.create_dataset('THETA_train',    data=THETA_train)
-    hf.create_dataset('PSI_train',      data=PSI_train)
+    hf.create_dataset('BETA_train',      data=BETA_train)
     hf.create_dataset('THETA_test',     data=THETA_test)
-    hf.create_dataset('PSI_test',       data=PSI_test)
+    hf.create_dataset('BETA_test',       data=BETA_test)
     hf.close()

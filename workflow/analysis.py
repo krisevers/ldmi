@@ -12,7 +12,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--path',              default='data',    help='Set path to obtain data')
 parser.add_argument('-n', '--name',                                 help='Name of experiment')
-parser.add_argument('--num_samples',   type=int, default=10000,     help='Number of samples to draw from posterior')
+parser.add_argument('--num_samples',   type=int, default=1000,      help='Number of samples to draw from posterior')
 parser.add_argument('--perm_idx',      type=int, default=0,         help='Index of test sample to plot')
 parser.add_argument('-q', '--quality',     action='store_true',     help='Run quality control')
 args = parser.parse_args()
@@ -24,9 +24,9 @@ posterior = torch.load(PATH + 'posterior.pt')
 # load train and test data
 hf = h5py.File(PATH + 'data.h5', 'r')
 THETA_train = np.array(hf.get('THETA_train'))
-PSI_train   = np.array(hf.get('PSI_train'))
+BETA_train   = np.array(hf.get('BETA_train'))
 THETA_test  = np.array(hf.get('THETA_test'))
-PSI_test    = np.array(hf.get('PSI_test'))
+BETA_test    = np.array(hf.get('BETA_test'))
 bounds      = np.array(hf.get('bounds'))
 keys        = np.array(hf.get('keys'))
 hf.close()
@@ -34,7 +34,7 @@ hf.close()
 num_samples = args.num_samples
 
 perm_idx = args.perm_idx
-posterior.set_default_x(PSI_test[perm_idx])
+posterior.set_default_x(BETA_test[perm_idx])
 posterior_samples = posterior.sample((num_samples,))
 
 from view import pairplot, marginal_correlation, marginal
@@ -59,13 +59,15 @@ plt.close('all')
 if args.quality:
 
     # training performance on test set
-    num_tests = PSI_test.shape[0]
+    num_tests = BETA_test.shape[0]
+
+    num_samples = 100
 
     accuracy    = np.zeros((num_tests, 8))
     uncertainty = np.zeros((num_tests, 8))
 
     for i in range(num_tests):
-        posterior.set_default_x(PSI_test[i])
+        posterior.set_default_x(BETA_test[i])
         posterior_samples = posterior.sample((num_samples,))
 
         # for each test sample compute the accuracy and uncertainty of the posterior

@@ -1,0 +1,35 @@
+[
+    {
+        "name": "checkerboard",
+        "duration": 40,
+        "conditions": [
+            {
+                "name":           "black",
+                "onset":          5,
+                "duration":       5,
+                "repetitions":    1,
+                "interval":       0
+            }
+        ]
+    },
+    {
+        "name": "another protocol",
+        "duration": 60,
+        "conditions": [
+            {
+                "name":           "red",
+                "onset":          10,
+                "duration":       10,
+                "repetitions":    2,
+                "interval":       2
+            },
+            {
+                "name":           "blue",
+                "onset":          20,
+                "duration":       15,
+                "repetitions":    3,
+                "interval":       3
+            }
+        ]
+    }
+]

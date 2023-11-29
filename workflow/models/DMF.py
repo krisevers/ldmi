@@ -67,9 +67,9 @@ def DMF(I_th, I_cc, area='V1'):
     def sim(X, Y, I, I_th, I_cc, I_bg, G, func, tau_s, tau_m, R, dt, T, N):
         for t in range(1, T):
             # save currents (recurrent + external)
-            I[t, :M**2]         = np.ravel(G * func(Y[t-1]))    * np.repeat(N, M) * dt
-            I[t, M**2:M**2+M]   = I_th[t-1]                     * N * dt
-            I[t, M**2+M:]       = I_cc[t-1]                     * N * dt
+            I[t, :M**2]         = np.ravel(G * func(Y[t-1]))  * dt  #* np.repeat(N, M) * dt
+            I[t, M**2:M**2+M]   = I_th[t-1]                   * dt  #* N * dt
+            I[t, M**2+M:]       = I_cc[t-1]                   * dt  #* N * dt
             # update state variables
             X_dot = (-X[t-1]/tau_s + np.dot(G, func(Y[t-1])) + I_th[t-1] + I_cc[t-1] + I_bg)
             Y_dot = (-Y[t-1] + R*X[t-1]) / tau_m

@@ -83,7 +83,7 @@ if rank == 0:
     DATA     = np.array(DATA)
     THETA    = np.array([DATA[i]['THETA']       for i in range(len(DATA))])
     PSI      = np.array([DATA[i]['PSI']         for i in range(len(DATA))])
-    BASELINE = np.array([DATA[i]['BASELINE']    for i in range(len(DATA))])
+    BASELINE = DATA[0]['BASELINE']  # baseline is the same for all simulations
 
     import os
     # check if path exists
