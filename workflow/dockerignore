@@ -6,3 +6,6 @@ maps/*
 
 utils/
 utils/*
+
+data/
+data/*

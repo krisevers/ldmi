@@ -2,8 +2,6 @@ import numpy as np
 import h5py
 import json
 
-import pylab as plt
-
 from maps.I2K import I2K
 
 import argparse
@@ -127,6 +125,8 @@ if __name__=="__main__":
 
         if args.show:
 
+            import pylab as plt
+
             import os
             # check if path exists
             if not os.path.exists(PATH + 'pdf'):
@@ -136,16 +136,16 @@ if __name__=="__main__":
             plt.imshow(BETA.T, aspect='auto', cmap='PiYG', interpolation=None)
             plt.colorbar(fraction=0.046, pad=0.04)
             plt.title('BETA')
-            plt.xlabel('Cortical depth')
-            plt.ylabel('Simulation')
+            plt.xlabel('Simulation')
+            plt.ylabel('Cortical Depth')
             plt.savefig(PATH + 'pdf/BETA.pdf', dpi=300)
 
             plt.figure()
             plt.imshow(THETA.T, aspect='auto', cmap='PiYG', interpolation=None)
             plt.colorbar(fraction=0.046, pad=0.04)
             plt.title('THETA')
-            plt.xlabel('Parameter')
-            plt.ylabel('Simulation')
+            plt.xlabel('Simulation')
+            plt.ylabel('Parameters')
             plt.savefig(PATH + 'pdf/THETA.pdf', dpi=300)
 
             plt.figure()
