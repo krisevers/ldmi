@@ -3,15 +3,11 @@ import numpy as np
 from numba import jit
 
 @jit(nopython=True)
-def NVC(neuro):
+def NVC(neuro, c1=0.6, c2=1.5, c3=0.6):
     # --------------------------------------------------------------------------
-    # Default parameters
-    c1 = 0.6
-    c2 = 1.5
-    c3 = 0.6
 
-    K = neuro.shape[1]
     T = neuro.shape[0]
+    K = neuro.shape[1]
 
     # Initial condtions:
     Xvaso    = np.zeros(K)

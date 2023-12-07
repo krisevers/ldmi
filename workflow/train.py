@@ -82,9 +82,6 @@ if __name__=="__main__":
     hf = h5py.File(PATH + 'data.h5', 'r')
     BETA    = np.array(hf.get('BETA'))
     THETA   = np.array(hf.get('THETA'))
-    bounds  = np.array(hf.get('bounds'))
-    keys = np.array(hf.get('keys'))
-
     hf.close()
 
     print("Number of simulations: {}".format(np.shape(THETA)[0]))
@@ -104,9 +101,9 @@ if __name__=="__main__":
     idx_train = idx[:int(ratio * num_simulations)]
     idx_test  = idx[int(ratio * num_simulations):]
 
-    THETA_train = THETA_torch[idx_train]
+    THETA_train  = THETA_torch[idx_train]
     BETA_train   = BETA_torch[idx_train]
-    THETA_test  = THETA_torch[idx_test]
+    THETA_test   = THETA_torch[idx_test]
     BETA_test    = BETA_torch[idx_test]
 
     print("Training {} on {} simulations...".format(args.method, num_simulations))
