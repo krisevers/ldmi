@@ -40,7 +40,7 @@ G = np.tile([J_E, J_I], (M, int(M/2))) * C    # synaptic conductances
 
 I_bg = np.array([19.149, 20.362, 30.805, 28.069, 29.437, 29.33, 34.932, 32.081])
 
-I_bg[4] * 1.1
+I_bg[4] *= 1.05
 
 
 # external input
@@ -72,33 +72,33 @@ import pylab as plt
 colors = plt.cm.Spectral(np.linspace(0, 1, M))
 populations = ['L23E', 'L23I', 'L4E', 'L4I', 'L5E', 'L5I', 'L6E', 'L6I']
 
-plt.figure(figsize=(12,4))
-plt.subplot(131)
+plt.figure(figsize=(8,4))
+plt.subplot(121)
 for i in range(M):
     plt.plot(Abar[i,100:], color=colors[i], label=populations[i])
     plt.text(Abar[:,100:].shape[1], Abar[i,-1], populations[i], color=colors[i])
 plt.legend()
 plt.xlabel('Time (ms)')
 plt.ylabel('Firing rate (Hz)')
-plt.subplot(132)    # mean firing rate
+plt.subplot(122)    # mean firing rate
 emp_rates = np.array([0.974, 2.861, 4.673, 5.65, 8.141, 9.013, 0.988, 7.53])
 plt.bar(np.arange(M), emp_rates, color=colors, alpha=0.5, width=1.0, edgecolor='k')
 plt.bar(np.arange(M), np.mean(A[:,100:], axis=1), color=colors, width=.8, edgecolor='k')
 plt.xticks(np.arange(M), populations)
 plt.xlabel('Population')
 plt.ylabel('Mean firing rate (Hz)')
-plt.subplot(133)    # synchrony
-emp_sync = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-plt.bar(np.arange(M), emp_sync, color=colors, alpha=0.5, width=1.0, edgecolor='k')
-# Synchrony of multiunit spiking activity quantified by the variance of the spike count histogram (bin width 3 ms) divided by its mean.
-sync = np.zeros(M)
-for i in range(M):
-    hist, bins = np.histogram(A[i,100:], bins=np.arange(0, A.shape[1], int(0.003/dt_rec)))
-    sync[i] = np.var(hist) / np.mean(hist)
-plt.bar(np.arange(M), sync, color=colors, width=.8, edgecolor='k')
-plt.xticks(np.arange(M), populations)
-plt.xlabel('Population')
-plt.ylabel('Synchrony')
+# plt.subplot(133)    # synchrony
+# emp_sync = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+# plt.bar(np.arange(M), emp_sync, color=colors, alpha=0.5, width=1.0, edgecolor='k')
+# # Synchrony of multiunit spiking activity quantified by the variance of the spike count histogram (bin width 3 ms) divided by its mean.
+# sync = np.zeros(M)
+# for i in range(M):
+#     hist, bins = np.histogram(A[i,100:], bins=np.arange(0, A.shape[1], int(0.003/dt_rec)))
+#     sync[i] = np.var(hist) / np.mean(hist)
+# plt.bar(np.arange(M), sync, color=colors, width=.8, edgecolor='k')
+# plt.xticks(np.arange(M), populations)
+# plt.xlabel('Population')
+# plt.ylabel('Synchrony')
 plt.tight_layout()
 plt.show()
 
