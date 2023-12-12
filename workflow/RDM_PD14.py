@@ -6,14 +6,14 @@ from models.RDM import RDM
 # parameters
 T = 1
 dt = 5e-4
-dt_rec = 1e-3
+dt_rec = 5e-4
 Nrecord = 8
 seed = 0
 
 # parameters
-tau_m   = 0.02    # membrane time constant (s)
-tau_s_E = 0.003   # synaptic time constant (s)
-tau_s_I = 0.006   # synaptic time constant (s)
+tau_m   = 0.01     # membrane time constant (s)
+tau_s_E = 0.0005   # synaptic time constant (s)
+tau_s_I = 0.0005   # synaptic time constant (s)
 
 # connectivity parameters
 P = np.array( # connection probabilities
@@ -32,37 +32,35 @@ N = np.array([20683,	5834,	21915,	5479,	4850,	1065,	14395,	2948])
 
 C = np.log(1-P) / np.log(1 - 1/(N * N)) / N     # number of synapses
 
-g = -4.
-J_E = 8.78e-3
+g = -4
+J_E = 0.176
 J_I = J_E * g
 
 G = np.tile([J_E, J_I], (M, int(M/2))) * C    # synaptic conductances
 
-C_bg = np.array([1600, 1500, 2100, 1900, 2000, 1900, 2900, 2100])   # number of background synapses
-G_bg = C_bg * J_E
-nu_bg = 8.
-I_bg = G_bg * nu_bg
-
 I_bg = np.array([19.149, 20.362, 30.805, 28.069, 29.437, 29.33, 34.932, 32.081])
 
+I_bg[4] * 1.1
+
+
 # external input
-I_ext = {"onset":   np.array([0.0, 0.0, 0.3, 0.3, 0.0, 0.0, 0.0, 0.0]),
-         "offset":  np.array([0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0]),
-         "I":       np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])}
+I_ext = {"onset":   np.array([0.0, 0.0, 0.3,  0.3,    0.0, 0.0, 0.3,   0.3  ]),
+         "offset":  np.array([0.0, 0.0, 0.5,  0.5,    0.0, 0.0, 0.5,   0.5  ]),
+         "I":       np.array([0.0, 0.0, 19.0, 11.964, 0.0, 0.0, 9.896, 3.788]) * 0}
 
 params = {
     "M": M,
     "N": N,
     "mu": I_bg,
-    "Delta_u": np.ones(M) * 5.0,
-    "c": np.ones(M) * 15.0,
-    "vreset": np.zeros(M),
-    "vth": np.ones(M) * 15.0,
-    "tref": np.ones(M) * 0.002,
-    "delay": np.zeros(M),
-    "tau_m": np.ones(M) * tau_m,
-    "tau_s": np.tile([tau_s_E, tau_s_I], int(M/2)),
-    "weights": G,
+    "Delta_u":  np.ones(M) * 5.0,
+    "c":        np.ones(M) * 10.0,
+    "vreset":   np.ones(M) * 0.0,
+    "vth":      np.ones(M) * 15.0,
+    "tref":     np.ones(M) * 0.002,
+    "delay":    np.ones(M) * 0.001,
+    "tau_m":    np.ones(M) * tau_m,
+    "tau_s":    np.tile([tau_s_E, tau_s_I], int(M/2)),
+    "weights":  G,
 }
 
 # run simulation
@@ -74,17 +72,34 @@ import pylab as plt
 colors = plt.cm.Spectral(np.linspace(0, 1, M))
 populations = ['L23E', 'L23I', 'L4E', 'L4I', 'L5E', 'L5I', 'L6E', 'L6I']
 
-plt.figure()
-plt.subplot(211)
+plt.figure(figsize=(12,4))
+plt.subplot(131)
 for i in range(M):
-    plt.plot(Abar[i,:], color=colors[i], label=populations[i])
-    plt.text(Abar.shape[1], Abar[i,-1], populations[i])
+    plt.plot(Abar[i,100:], color=colors[i], label=populations[i])
+    plt.text(Abar[:,100:].shape[1], Abar[i,-1], populations[i], color=colors[i])
 plt.legend()
 plt.xlabel('Time (ms)')
 plt.ylabel('Firing rate (Hz)')
-plt.subplot(212)
-plt.bar(np.arange(M), np.mean(Abar[:,100:], axis=1), color=colors)
+plt.subplot(132)    # mean firing rate
+emp_rates = np.array([0.974, 2.861, 4.673, 5.65, 8.141, 9.013, 0.988, 7.53])
+plt.bar(np.arange(M), emp_rates, color=colors, alpha=0.5, width=1.0, edgecolor='k')
+plt.bar(np.arange(M), np.mean(A[:,100:], axis=1), color=colors, width=.8, edgecolor='k')
 plt.xticks(np.arange(M), populations)
 plt.xlabel('Population')
 plt.ylabel('Mean firing rate (Hz)')
+plt.subplot(133)    # synchrony
+emp_sync = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+plt.bar(np.arange(M), emp_sync, color=colors, alpha=0.5, width=1.0, edgecolor='k')
+# Synchrony of multiunit spiking activity quantified by the variance of the spike count histogram (bin width 3 ms) divided by its mean.
+sync = np.zeros(M)
+for i in range(M):
+    hist, bins = np.histogram(A[i,100:], bins=np.arange(0, A.shape[1], int(0.003/dt_rec)))
+    sync[i] = np.var(hist) / np.mean(hist)
+plt.bar(np.arange(M), sync, color=colors, width=.8, edgecolor='k')
+plt.xticks(np.arange(M), populations)
+plt.xlabel('Population')
+plt.ylabel('Synchrony')
+plt.tight_layout()
 plt.show()
+
+import IPython; IPython.embed()
