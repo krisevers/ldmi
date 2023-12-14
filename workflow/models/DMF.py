@@ -3,7 +3,7 @@ import json
 
 from numba import jit
 
-def DMF(I_th, I_cc, area='V1', t_sim=1, dt=1e-4, sigma=0):
+def DMF(I_th, I_cc, area=None, N=None, t_sim=1, dt=1e-4, sigma=0):
     """
     DMF: Dynamic Mean Field
 
@@ -37,11 +37,12 @@ def DMF(I_th, I_cc, area='V1', t_sim=1, dt=1e-4, sigma=0):
     P[0, 2] *= 2
     
     # load population size
-    with open('maps/popsize.json') as f:
-        popsizes = json.load(f)
-    N = np.array(popsizes[area]) / 2
-    if area == 'V1':
-        N = np.array([20683,	5834,	21915,	5479,	4850,	1065,	14395,	2948])
+    if N is None:
+        with open('maps/popsize.json') as f:
+            popsizes = json.load(f)
+        N = np.array(popsizes[area]) / 2
+        if area == 'V1':
+            N = np.array([20683,	5834,	21915,	5479,	4850,	1065,	14395,	2948])
 
     C = np.log(1-P) / np.log(1 - 1/(N * N)) / N     # number of synapses
 

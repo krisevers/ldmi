@@ -42,19 +42,30 @@ M = 8
 
 keys   = ['IL23E', 'IL23I', 'IL4E', 'IL4I', 'IL5E', 'IL5I', 'IL6E', 'IL6I']
 bounds = [
-    [0,   200],
-    [0,   200],
-    [0,   200],
-    [0,   200],
-    [0,   200],
-    [0,   200],
-    [0,   200],
-    [0,   200],
+    [0,     200 ], # IL23E
+    [0,     200 ], # IL23I
+    [0,     200 ], # IL4E
+    [0,     200 ], # IL4I
+    [0,     200 ], # IL5E
+    [0,     200 ], # IL5I
+    [0,     200 ], # IL6E
+    [0,     200     ], # IL6I
+    [30774, 64447   ], # NL23E
+    [8680,  18178   ], # NL23I
+    [10645, 70387   ], # NL4E
+    [2661,  17597   ], # NL4I
+    [7681,  20740   ], # NL5E
+    [1686,  4554    ], # NL5I
+    [7864,  34601   ], # NL6E
+    [1610,  7086    ], # NL6I
 ]
 
-theta = np.zeros((args.num_sims, 8))
+num_Iext = M # number of external inputs
+num_N    = M # number of populations
+num_parameters = num_Iext + num_N # 8 population sizes + 8 external inputs
+theta = np.zeros((args.num_sims, num_parameters))
 # fill theta with random values for each population within the bounds
-for i in range(8):
+for i in range(num_parameters):
     theta[:, i] = np.random.uniform(bounds[i][0], bounds[i][1], args.num_sims)
 
 params_per_worker = np.array_split(theta, comm.Get_size())
@@ -66,9 +77,10 @@ DATA = []
 for i in tqdm.tqdm(range(num_simulations_per_worker)):
     dt = 1e-4
     I_ext = np.zeros((T, M))
-    I_ext[int(0.6/dt):int(0.9/dt), :] = worker_params[i]
+    I_ext[int(0.6/dt):int(0.9/dt), :] = worker_params[i, :num_Iext]
+    N = worker_params[i, num_Iext:]
 
-    _, _, I = DMF(I_th=I_ext, I_cc=np.zeros((T, M)),  area=args.area)
+    _, _, I, _ = DMF(I_th=I_ext, I_cc=np.zeros((T, M)), N=N)
 
     PSI = I[int(0.7/dt)]
     THETA = worker_params[i]
