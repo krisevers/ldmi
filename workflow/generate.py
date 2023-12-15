@@ -80,21 +80,27 @@ for i in tqdm.tqdm(range(num_simulations_per_worker)):
     I_ext[int(0.6/dt):int(0.9/dt), :] = worker_params[i, :num_Iext]
     N = worker_params[i, num_Iext:]
 
-    _, _, I, _ = DMF(I_th=I_ext, I_cc=np.zeros((T, M)), N=N)
+    _, _, I, F = DMF(I_th=I_ext, I_cc=np.zeros((T, M)), N=N)
 
-    PSI = I[int(0.7/dt)]
+    CURRENT = I[int(0.7/dt)]
+    RATE    = F[int(0.7/dt)]
     THETA = worker_params[i]
     BASELINE = I[int(0.5/dt)]
 
-    DATA.append({'PSI': PSI, 'THETA': THETA, 'BASELINE': BASELINE})
+    DATA.append({'CURRENT': CURRENT,
+                 'RATE': RATE,
+                 'THETA': THETA, 
+                 'BASELINE': BASELINE})
 
 DATA = comm.allgather(DATA)
 
 if rank == 0:
     DATA     = np.ravel(DATA)
     DATA     = np.array(DATA)
+
     THETA    = np.array([DATA[i]['THETA']       for i in range(len(DATA))])
-    PSI      = np.array([DATA[i]['PSI']         for i in range(len(DATA))])
+    CURRENT  = np.array([DATA[i]['CURRENT']     for i in range(len(DATA))])
+    RATE     = np.array([DATA[i]['RATE']        for i in range(len(DATA))])
     BASELINE = DATA[0]['BASELINE']  # baseline is the same for all simulations
 
     import os
@@ -102,8 +108,9 @@ if rank == 0:
     if not os.path.exists(PATH):
         os.makedirs(PATH)
         
-    hf = h5py.File(PATH + 'data.h5', 'w')
-    hf.create_dataset('PSI',        data=PSI)
+    hf = h5py.File(PATH + 'dmf.h5', 'w')
+    hf.create_dataset('CURRENT',    data=CURRENT)
+    hf.create_dataset('RATE',       data=RATE)
     hf.create_dataset('THETA',      data=THETA)
     hf.create_dataset('BASELINE',   data=BASELINE)
     hf.create_dataset('bounds',     data=bounds)

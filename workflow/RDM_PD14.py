@@ -5,7 +5,7 @@ from models.RDM import RDM
 
 # parameters
 T = 1
-dt = 5e-4
+dt_RDM = 5e-4
 dt_rec = 5e-4
 Nrecord = 8
 seed = 0
@@ -40,13 +40,11 @@ G = np.tile([J_E, J_I], (M, int(M/2))) * C    # synaptic conductances
 
 I_bg = np.array([19.149, 20.362, 30.805, 28.069, 29.437, 29.33, 34.932, 32.081])
 
-I_bg[4] *= 1.05
-
 
 # external input
 I_ext = {"onset":   np.array([0.0, 0.0, 0.3,  0.3,    0.0, 0.0, 0.3,   0.3  ]),
          "offset":  np.array([0.0, 0.0, 0.5,  0.5,    0.0, 0.0, 0.5,   0.5  ]),
-         "I":       np.array([0.0, 0.0, 19.0, 11.964, 0.0, 0.0, 9.896, 3.788]) * 0}
+         "I":       np.array([0.0, 0.0, 19.0, 11.964, 0.0, 0.0, 9.896, 3.788]) * 10}
 
 params = {
     "M": M,
@@ -64,7 +62,18 @@ params = {
 }
 
 # run simulation
-Abar, A = RDM(T, dt, dt_rec, params, I_ext, Nrecord, seed)
+Abar, A = RDM(T, dt_RDM, dt_rec, params, I_ext, Nrecord, seed)
+
+from models.DMF import DMF
+
+dt_DMF = 1e-4
+I_th = np.zeros((int(T/dt_DMF), M))
+for i in range(M):
+    I_th[int(I_ext["onset"][i]/dt_DMF):int(I_ext["offset"][i]/dt_DMF), i] = I_ext["I"][i]
+
+I_cc = np.zeros_like(I_th)
+
+X, Y, I, F = DMF(I_th=I_th, I_cc=I_cc, area='V1', N=N, t_sim=T, dt=dt_DMF, sigma=0.1)
 
 # plot results
 import pylab as plt
@@ -73,33 +82,59 @@ colors = plt.cm.Spectral(np.linspace(0, 1, M))
 populations = ['L23E', 'L23I', 'L4E', 'L4I', 'L5E', 'L5I', 'L6E', 'L6I']
 
 plt.figure(figsize=(8,4))
-plt.subplot(121)
+plt.subplot(221)
 for i in range(M):
-    plt.plot(Abar[i,100:], color=colors[i], label=populations[i])
-    plt.text(Abar[:,100:].shape[1], Abar[i,-1], populations[i], color=colors[i])
+    plt.plot(Abar[i,int(0.1/dt_RDM):], color=colors[i], label=populations[i])
+    plt.text(Abar[:,int(0.1/dt_RDM):].shape[1], Abar[i,-1], populations[i], color=colors[i])
 plt.legend()
 plt.xlabel('Time (ms)')
 plt.ylabel('Firing rate (Hz)')
-plt.subplot(122)    # mean firing rate
+plt.subplot(222)    # RDM
 emp_rates = np.array([0.974, 2.861, 4.673, 5.65, 8.141, 9.013, 0.988, 7.53])
 plt.bar(np.arange(M), emp_rates, color=colors, alpha=0.5, width=1.0, edgecolor='k')
-plt.bar(np.arange(M), np.mean(A[:,100:], axis=1), color=colors, width=.8, edgecolor='k')
+plt.bar(np.arange(M), np.mean(A[:,int(0.1/dt_RDM):], axis=1), color=colors, width=.8, edgecolor='k')
 plt.xticks(np.arange(M), populations)
 plt.xlabel('Population')
 plt.ylabel('Mean firing rate (Hz)')
-# plt.subplot(133)    # synchrony
-# emp_sync = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-# plt.bar(np.arange(M), emp_sync, color=colors, alpha=0.5, width=1.0, edgecolor='k')
-# # Synchrony of multiunit spiking activity quantified by the variance of the spike count histogram (bin width 3 ms) divided by its mean.
-# sync = np.zeros(M)
-# for i in range(M):
-#     hist, bins = np.histogram(A[i,100:], bins=np.arange(0, A.shape[1], int(0.003/dt_rec)))
-#     sync[i] = np.var(hist) / np.mean(hist)
-# plt.bar(np.arange(M), sync, color=colors, width=.8, edgecolor='k')
-# plt.xticks(np.arange(M), populations)
-# plt.xlabel('Population')
-# plt.ylabel('Synchrony')
+plt.subplot(223)    # DMF
+for i in range(M):
+    plt.plot(F[int(0.1/dt_DMF):,i], color=colors[i], label=populations[i])
+    plt.text(F.shape[0], F[-1,i], populations[i], color=colors[i])
+plt.legend()
+plt.xlabel('Time (ms)')
+plt.ylabel('Firing rate (Hz)')
+plt.subplot(224)    # DMF
+plt.bar(np.arange(M), emp_rates, color=colors, alpha=0.5, width=1.0, edgecolor='k')
+plt.bar(np.arange(M), np.mean(F[int(0.1/dt_DMF):,:], axis=0), color=colors, width=.8, edgecolor='k')
+plt.xticks(np.arange(M), populations)
+plt.xlabel('Population')
+plt.ylabel('Mean firing rate (Hz)')
 plt.tight_layout()
 plt.show()
+
+# subsample F from dt_RDM to dt_DMF
+F = F[::int(dt_RDM/dt_DMF),:]
+
+plt.figure(figsize=(8,4))
+for i in range(M):
+    plt.subplot(4, 2, i+1)
+    plt.plot(A[i,int(0.1/dt_RDM):], color='k', label=populations[i], alpha=0.3)
+    plt.plot(Abar[i,int(0.1/dt_RDM):], color='k', label=populations[i])
+    plt.plot(F[int(0.1/dt_RDM):,i], color='r', label=populations[i])
+plt.tight_layout()
+plt.show()
+
+# powerspectra
+from scipy.signal import welch
+
+# plt.figure(figsize=(8,4))
+# for i in range(M):
+#     plt.subplot(4, 2, i+1)
+#     f, Pxx = welch(Abar[i,int(0.1/dt_RDM):], fs=1/dt_RDM, nperseg=1024)
+#     plt.plot(f, np.log(Pxx), color='k', label=populations[i])
+#     f, Pxx = welch(F[int(0.1/dt_RDM):,i], fs=1/dt_RDM, nperseg=1024)
+#     plt.plot(f, np.log(Pxx), color='r', label=populations[i])
+# plt.tight_layout()
+# plt.show()
 
 import IPython; IPython.embed()

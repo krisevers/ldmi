@@ -128,11 +128,11 @@ if [ "$mode" == "train" ] || [ "$mode" == "infer" ]; then
 
     echo "--------Training neural density estimator--------"
     python3 train.py \
-    --name $experiment_name \
-    --threads $num_threads \
-    --device $device \
-    --method $method \
-    --ratio $ratio
+    --name      $experiment_name \
+    --threads   $num_threads \
+    --device    $device \
+    --method    $method \
+    --ratio     $ratio
 fi
 
 # Analyze results

@@ -65,7 +65,6 @@ def DMF(I_th, I_cc, area=None, N=None, t_sim=1, dt=1e-4, sigma=0):
     def func(x, a=a, b=b, d=d):
         return (a*x - b) / (1 - np.exp(-d*(a*x - b)))
     
-    @jit(nopython=True)
     def sim(X, Y, I, I_th, I_cc, I_bg, G, func, tau_s, tau_m, R, dt, T, N, sigma=0):
         for t in range(1, T):
             dsig = np.sqrt(dt / tau_s) * sigma

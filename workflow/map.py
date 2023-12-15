@@ -29,7 +29,8 @@ if __name__=="__main__":
     # load current data
     print('Loading data...')
     with h5py.File(PATH + 'data.h5', 'r') as hf:
-        PSI         = hf['PSI'][:]
+        CURRENT     = hf['CURRENT'][:]
+        RATE        = hf['RATE'][:]
         THETA       = hf['THETA'][:]
         BASELINE    = hf['BASELINE'][:]
         bounds      = hf['bounds'][:]
@@ -45,19 +46,15 @@ if __name__=="__main__":
     E_map[:, 64:] = 1
 
     print('Computing laminar projection of currents to synapses...')
-    MAP = np.zeros((PSI.shape[0], K))
-    for i in range(PSI.shape[0]):
-        MAP[i] = (PSI[i] @ (PROB_K * E_map).T)
+    MAP = np.zeros((CURRENT.shape[0], K))
+    for i in range(CURRENT.shape[0]):
+        MAP[i] = (CURRENT[i] @ (PROB_K * E_map).T)
 
     print('Computing baseline currents...')
     BASELINE = BASELINE @ (PROB_K * E_map).T
 
     print('Saving data...')
-    with h5py.File(PATH + 'data.h5', 'a') as hf:
-        hf.create_dataset('MAP',     data=MAP)
-    hf.close()
-
-    with h5py.File(PATH + 'data.h5', 'r+') as hf:
-        del hf['BASELINE']
-        hf.create_dataset('BASELINE', data=BASELINE)
+    hf = h5py.File(PATH + 'map.h5', 'w')
+    hf.create_dataset('CURRENT',  data=MAP)
+    hf.create_dataset('BASELINE', data=BASELINE)
     hf.close()
