@@ -1,4 +1,4 @@
-#!/home/kris/Documents/GitHub/ldmi/ldmienv/bin/python3
+#!/home/kris/Documents/GitHub/ldmi/ldmienv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

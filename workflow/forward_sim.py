@@ -35,55 +35,45 @@ I_th_T[int(0.2/dt):int(0.5/dt), :] = I_th
 I_cc_T = np.zeros((T, M))
 I_cc_T[int(0.6/dt):int(0.9/dt), :] = I_cc
 
-X, Y, I = DMF(I_th=I_th_T, I_cc=I_cc_T, area='V1')
+X, Y, I, F = DMF(I_th=I_th_T, I_cc=I_cc_T, area='V1')
 
 species = 'macaque'
 area    = 'V1'
 K       = 31
-# load mapping from I to K
-with h5py.File('maps/I2K_{}_{}_K{}.h5'.format(species, area, K), 'r') as hf:
-    PROB_K = hf['PROB'][:]
 
-PROB_K = np.array([np.concatenate((np.ravel(PROB_K[k, :, :8]), PROB_K[k, :, 8], PROB_K[k, :, 9])) for k in range(K)])
-I_K = np.array([I[t] * PROB_K for t in range(T)])
+from maps.I2K import I2K
 
+PROB_K = I2K(K, species, area, sigma=1)
 
+print('Selecting excitatory synapses...')
+E_map = np.zeros((K, 80))
+E_map[:, ::2] = 1
+E_map[:, 64:] = 1
 
+print('Computing laminar projection of currents to synapses...')
+MAP = np.zeros((I.shape[0], K))
+for i in range(I.shape[0]):
+    MAP[i] = (I[i] @ (PROB_K * E_map).T)
+
+print('Computing baseline currents...')
+CURRENT_BASE = I[100] @ (PROB_K * E_map).T
+
+from models.NVC import NVC
+from models.LBR import LBR
+
+dt = 1e-4
+lbr_dt = 0.001
+lbr = LBR(K)
+
+F = NVC(I - CURRENT_BASE)
+F = F[::int(lbr_dt/dt)]     # resample to match LBR timesteps
+
+B, _, _ = lbr.sim(F, K, integrator='numba')
+# compute betas
+beta = np.linalg.lstsq(X, B, rcond=None)[0]
+BETA = beta[0]
 
 plt.figure()
-# effect of thalamic input
-plt.subplot(2, 2, 1)
-plt.imshow(np.sum(I_K[int(0.1/dt):, :, 64:72], axis=2).T, aspect='auto', cmap='Reds')
-plt.colorbar()
-plt.xlabel('Time (ms)')
-plt.ylabel('Cortical Depth (K)')
-plt.title('Thalamic input')
-
-# effect of cortico-cortical input
-plt.subplot(2, 2, 2)
-plt.imshow(np.sum(I_K[int(0.1/dt):, :, 72:], axis=2).T, aspect='auto', cmap='Reds')
-plt.colorbar()
-plt.xlabel('Time (ms)')
-plt.ylabel('Cortical Depth (K)')
-plt.title('Cortico-cortical input')
-
-# effect of recurrent input
-plt.subplot(2, 2, 3)
-plt.imshow(np.sum(I_K[int(0.1/dt):, :, ::2], axis=2).T, aspect='auto', cmap='Reds')
-plt.colorbar()
-plt.xlabel('Time (ms)')
-plt.ylabel('Cortical Depth (K)')
-plt.title('Recurrent input')
-
-# effect of all input
-plt.subplot(2, 2, 4)
-plt.imshow(np.sum(I_K[int(0.1/dt):, :, ::2], axis=2).T, aspect='auto', cmap='Reds')
-plt.colorbar()
-plt.xlabel('Time (ms)')
-plt.ylabel('Cortical Depth (K)')
-plt.title('All input')
-
-plt.tight_layout()
 
 plt.show()
 

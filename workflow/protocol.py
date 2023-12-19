@@ -23,15 +23,6 @@ if __name__=="__main__":
 
     PATH = args.path + '/' + args.name + '/'
 
-    # load DMF data
-    print('Loading data...')
-    hf = h5py.File(PATH + 'data.h5', 'r')
-    PSI     = hf['PSI'][:]
-    THETA   = hf['THETA'][:]
-    bounds  = hf['bounds'][:]
-    keys    = hf['keys'][:]
-    hf.close()
-
     # load protocol data
     print('Loading protocol...')
     protocol = json.load(open('protocol.json'))
@@ -60,7 +51,7 @@ if __name__=="__main__":
 
     # save protocol
     print('Saving protocol...')
-    hf = h5py.File(PATH + 'data.h5', 'a')
+    hf = h5py.File(PATH + 'protocol.h5', 'w')
     hf.create_dataset('timesteps',  data=t)
     hf.create_dataset('protocol',   data=x)
 

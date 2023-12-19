@@ -28,13 +28,14 @@ if __name__=="__main__":
 
     # load current data
     print('Loading data...')
-    with h5py.File(PATH + 'data.h5', 'r') as hf:
-        CURRENT     = hf['CURRENT'][:]
-        RATE        = hf['RATE'][:]
-        THETA       = hf['THETA'][:]
-        BASELINE    = hf['BASELINE'][:]
-        bounds      = hf['bounds'][:]
-        keys        = hf['keys'][:]
+    with h5py.File(PATH + 'dmf.h5', 'r') as hf:
+        CURRENT         = hf['CURRENT'][:]
+        RATE            = hf['RATE'][:]
+        THETA           = hf['THETA'][:]
+        CURRENT_BASE    = hf['CURRENT_BASE'][:]
+        RATE_BASE       = hf['RATE_BASE'][:]
+        bounds          = hf['bounds'][:]
+        keys            = hf['keys'][:]
     hf.close()
 
     # flatten probabilities along last two dimensions
@@ -51,10 +52,10 @@ if __name__=="__main__":
         MAP[i] = (CURRENT[i] @ (PROB_K * E_map).T)
 
     print('Computing baseline currents...')
-    BASELINE = BASELINE @ (PROB_K * E_map).T
+    CURRENT_BASE = CURRENT_BASE @ (PROB_K * E_map).T
 
     print('Saving data...')
     hf = h5py.File(PATH + 'map.h5', 'w')
     hf.create_dataset('CURRENT',  data=MAP)
-    hf.create_dataset('BASELINE', data=BASELINE)
+    hf.create_dataset('BASELINE', data=CURRENT_BASE)
     hf.close()

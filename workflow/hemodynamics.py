@@ -32,14 +32,19 @@ if __name__=="__main__":
     rank = comm.Get_rank()
     size = comm.Get_size()
 
-    # load DMF data
     if rank == 0:
         print('Loading data...')
-    hf = h5py.File(PATH + 'data.h5', 'r')
-    PSI         = hf['PSI'][:]          # DMF currents (num_sims x num_currents)
+    # load THETA
+    hf = h5py.File(PATH + 'dmf.h5', 'r')
     THETA       = hf['THETA'][:]        # parameters (num_sims x num_params)
-    MAP         = hf['MAP'][:]          # laminar projection of currents to synapses (num_sims x K)
+    hf.close()
+    # load currents
+    hf = h5py.File(PATH + 'map.h5', 'r')
+    CURRENT     = hf['CURRENT'][:]      # laminar projection of currents to synapses (num_sims x K)
     BASELINE    = hf['BASELINE'][:]     # baseline currents (K)
+    hf.close()
+    # load protocol data
+    hf = h5py.File(PATH + 'protocol.h5', 'r')
     timesteps   = hf['timesteps'][:]    # time steps (num_timesteps)
     protocol    = hf['protocol'][:]     # protocol (num_timesteps)
     hf.close()
@@ -48,8 +53,8 @@ if __name__=="__main__":
         print('Set parameters...')
     num_conditions  = len(np.unique(protocol)) - 1  # number of conditions (0 is baselline)
     num_timesteps   = int(len(timesteps))           # number of timesteps
-    num_sims        = int(MAP.shape[0])             # number of simulations
-    K               = int(MAP.shape[1])             # number of cortical depths
+    num_sims        = int(CURRENT.shape[0])         # number of simulations
+    K               = int(CURRENT.shape[1])         # number of cortical depths
 
     lbr = LBR(K)
     dt = 1e-4
@@ -65,19 +70,19 @@ if __name__=="__main__":
     X = np.tile(X, (K, 1)).T    # repeat for each cortical depth
 
     # renormalize all currents such that the median of the response is 1
-    median = np.median(MAP)
-    CURR = (MAP - BASELINE) / median
+    median = np.median(CURRENT)
+    CURR = (CURRENT - BASELINE) / median
 
 
     if rank == 0:
         print('Compute laminar BOLD responses and obtain betas...')
-    BETA = np.zeros((num_sims, K))
-    THETA_ = np.zeros((num_sims, 8))
 
     # Distribute simulations across processes
     sim_per_process = num_sims // size
     start_sim = rank * sim_per_process
     end_sim = start_sim + sim_per_process
+
+    BETA = np.zeros((num_sims, K))
 
 
     for s in range(start_sim, end_sim):
@@ -107,26 +112,20 @@ if __name__=="__main__":
         # compute betas
         beta = np.linalg.lstsq(X, B, rcond=None)[0]
         BETA[s] = beta[0]
-        THETA[s]
 
         del curr, F, B   # free memory
 
     # Gather results from all processes
-    all_BETA  = comm.gather(BETA,  root=0)
-    all_THETA = comm.gather(THETA, root=0)
+    all_BETA  = comm.allgather(BETA)
 
     if rank == 0:
-        # Concatenate results from all processes
-        BETA = np.concatenate(all_BETA)
-        THETA = np.concatenate(all_THETA)
+
+        # stack results from all processes
+        BETA  = np.array(np.sum(all_BETA, axis=0))
 
         print('Saving data...')
-        hf = h5py.File(PATH + 'data.h5', 'a')
+        hf = h5py.File(PATH + 'hemo.h5', 'w')
         hf.create_dataset('BETA', data=BETA)
-        hf.close()
-
-        hf = h5py.File(PATH + 'data.h5', 'r+')
-        del hf['THETA']
         hf.create_dataset('THETA', data=THETA)
         hf.close()
 

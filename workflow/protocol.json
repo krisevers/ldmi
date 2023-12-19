@@ -13,22 +13,22 @@
         ]
     },
     {
-        "name": "another protocol",
-        "duration": 60,
+        "name": "predictive-coding",
+        "duration": 40,
         "conditions": [
             {
-                "name":           "red",
+                "name":           "drive",
                 "onset":          10,
-                "duration":       10,
-                "repetitions":    2,
-                "interval":       2
+                "duration":       20,
+                "repetitions":    1,
+                "interval":       0
             },
             {
-                "name":           "blue",
+                "name":           "modulation",
                 "onset":          20,
-                "duration":       15,
-                "repetitions":    3,
-                "interval":       3
+                "duration":       10,
+                "repetitions":    1,
+                "interval":       0
             }
         ]
     }
