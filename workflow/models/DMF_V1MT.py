@@ -7,7 +7,7 @@ from numba import jit
 Implement multi-area model which takes external input and interarea connectivity as the parameters and returns the steady state currents of the populations.
 """
 
-def DMF_MA(I_ext=None, A=None, G=1, areas=['V1', 'MT'], num_columns=[2, 2]):
+def DMF_MA(I_ext=None, A=None, G=1, areas=['V1', 'MT'], num_columns=[2, 2], sigma=0):
     """
     Multi-area DMF: Dynamic Mean Field
 
@@ -118,7 +118,7 @@ def DMF_MA(I_ext=None, A=None, G=1, areas=['V1', 'MT'], num_columns=[2, 2]):
     def func(x, a=a, b=b, d=d):
         return (a*x - b) / (1 - np.exp(-d*(a*x - b)))
     
-    dsig = np.sqrt(dt / tau_s)
+    dsig = np.sqrt(dt / tau_s) * sigma
 
     # @jit(nopython=True)
     def sim(X, Y, I, I_ext, I_bg, G, func, tau_s, tau_m, R, dt, T):
@@ -139,14 +139,16 @@ def DMF_MA(I_ext=None, A=None, G=1, areas=['V1', 'MT'], num_columns=[2, 2]):
             X_dot = (-X[t-1]/tau_s + np.dot(G, func(Y[t-1])) + I_ext[t-1] + I_bg)
             Y_dot = (-Y[t-1] + R*X[t-1]) / tau_m
 
-            X[t] = X[t-1] + dt * X_dot
+            X[t] = X[t-1] + dt * X_dot + dsig * np.random.randn(tot_num_pops)
             Y[t] = Y[t-1] + dt * Y_dot
 
         return X, Y, I
 
     X, Y, I = sim(X=X, Y=Y, I=I, I_ext=I_ext, I_bg=I_bg, G=G, func=func, tau_s=tau_s, tau_m=tau_m, R=R, dt=dt, T=T)
 
-    return X, Y, I, eigs
+    F = func(Y)
+
+    return X, Y, F, I, eigs
 
 if __name__=="__main__":
 
@@ -205,73 +207,110 @@ if __name__=="__main__":
     I_ext[I_ext < 0.75] = 0
     I_ext *= 1e-3
 
-    X, Y, I, eigs = DMF_MA(areas=areas, num_columns=num_columns, A=A, I_ext=None, G=1)
+    X, Y, F, I, eigs = DMF_MA(areas=areas, num_columns=num_columns, A=A, I_ext=None, G=1, sigma=0.02)
 
+    # plt.figure()
+    # # V1
+    # plt.subplot(2, 1, 1)
+    # plt.imshow(X[:, :M], cmap='Reds', aspect='auto', interpolation='none')
+    # plt.xticks([])
+    # plt.yticks([])
+    # plt.ylabel('Time (ms)')
+    # plt.xlabel('Population')
+    # plt.title(r'$V1$')
+    # # MT
+    # plt.subplot(2, 1, 2)
+    # plt.imshow(X[:, M:M*2], cmap='Reds', aspect='auto', interpolation='none')
+    # plt.xticks([])
+    # plt.yticks([])
+    # plt.ylabel('Time (ms)')
+    # plt.xlabel('Population')
+    # plt.title(r'$MT$')
+    # plt.tight_layout()
+    # plt.show()
+
+
+    colors = plt.cm.Spectral(np.linspace(0, 1, M))
     plt.figure()
-    # V1
-    plt.subplot(2, 1, 1)
-    plt.imshow(X[:, :M], cmap='Reds', aspect='auto', interpolation='none')
-    plt.xticks([])
-    plt.yticks([])
-    plt.ylabel('Time (ms)')
-    plt.xlabel('Population')
-    plt.title(r'$V1$')
-    # MT
-    plt.subplot(2, 1, 2)
-    plt.imshow(X[:, M:M*2], cmap='Reds', aspect='auto', interpolation='none')
-    plt.xticks([])
-    plt.yticks([])
-    plt.ylabel('Time (ms)')
-    plt.xlabel('Population')
-    plt.title(r'$MT$')
+    for i in range(M):
+        plt.subplot(2, 1, 1)
+        plt.title(r'$V1$')
+        plt.plot(F[:, i])
+        plt.subplot(2, 1, 2)
+        plt.title(r'$MT$')
+        plt.plot(F[:, M+i])
     plt.tight_layout()
     plt.show()
 
-    import sys
-    # add parent directory to path
-    sys.path.append('maps/')
 
-    from I2K import I2K
 
-    K = 5
-    T = I.shape[0]
-    MAP = np.zeros((T, tot_num_columns, K))
-    all_areas = np.repeat(areas, num_columns)
-    for i, area in enumerate(all_areas):
-        PROB_K = I2K(K, 'macaque', area, sigma=1)
 
-        # flatten probabilities along last two dimensions
-        PROB_K = np.array([np.concatenate((np.ravel(PROB_K[k, :, :8]), PROB_K[k, :, 8], PROB_K[k, :, 9])) for k in range(K)])
 
-        MAP[:, i] = (I[:, i] @ PROB_K.T)
 
-    import seaborn as sns
-    sns.set_style('white')
 
-    plt.figure()
-    plt.subplot(2, 1, 1)
-    plt.imshow(MAP[:, 0], cmap='Reds', aspect='auto', interpolation='none')
-    plt.xticks([])
-    plt.yticks([])
-    plt.ylabel('Time (ms)')
-    plt.xlabel('Depth')
-    plt.title(r'$V1$')
-    plt.subplot(2, 1, 2)
-    plt.imshow(MAP[:, 1], cmap='Reds', aspect='auto', interpolation='none')
-    plt.xticks([])
-    plt.yticks([])
-    plt.ylabel('Time (ms)')
-    plt.xlabel('Depth')
-    plt.title(r'$MT$')
-    plt.tight_layout()
-    plt.show()
 
-    plt.figure()
-    dt = 1e-4
-    plt.plot(MAP[int(0.5/dt), 0] - MAP[int(0.1/dt), 0], label=r'$V1$', color='k')
-    plt.plot(MAP[int(0.5/dt), 1] - MAP[int(0.1/dt), 1], label=r'$MT$', color='r')
-    plt.legend()
-    plt.xlabel('Depth')
-    plt.ylabel('Current')
-    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # import sys
+    # # add parent directory to path
+    # sys.path.append('maps/')
+
+    # from I2K import I2K
+
+    # K = 5
+    # T = I.shape[0]
+    # MAP = np.zeros((T, tot_num_columns, K))
+    # all_areas = np.repeat(areas, num_columns)
+    # for i, area in enumerate(all_areas):
+    #     PROB_K = I2K(K, 'macaque', area, sigma=1)
+
+    #     # flatten probabilities along last two dimensions
+    #     PROB_K = np.array([np.concatenate((np.ravel(PROB_K[k, :, :8]), PROB_K[k, :, 8], PROB_K[k, :, 9])) for k in range(K)])
+
+    #     MAP[:, i] = (I[:, i] @ PROB_K.T)
+
+    # import seaborn as sns
+    # sns.set_style('white')
+
+    # plt.figure()
+    # plt.subplot(2, 1, 1)
+    # plt.imshow(MAP[:, 0], cmap='Reds', aspect='auto', interpolation='none')
+    # plt.xticks([])
+    # plt.yticks([])
+    # plt.ylabel('Time (ms)')
+    # plt.xlabel('Depth')
+    # plt.title(r'$V1$')
+    # plt.subplot(2, 1, 2)
+    # plt.imshow(MAP[:, 1], cmap='Reds', aspect='auto', interpolation='none')
+    # plt.xticks([])
+    # plt.yticks([])
+    # plt.ylabel('Time (ms)')
+    # plt.xlabel('Depth')
+    # plt.title(r'$MT$')
+    # plt.tight_layout()
+    # plt.show()
+
+    # plt.figure()
+    # dt = 1e-4
+    # plt.plot(MAP[int(0.5/dt), 0] - MAP[int(0.1/dt), 0], label=r'$V1$', color='k')
+    # plt.plot(MAP[int(0.5/dt), 1] - MAP[int(0.1/dt), 1], label=r'$MT$', color='r')
+    # plt.legend()
+    # plt.xlabel('Depth')
+    # plt.ylabel('Current')
+    # plt.show()
     
