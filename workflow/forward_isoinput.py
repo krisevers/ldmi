@@ -76,8 +76,11 @@ for m in range(M):
 
 # postprocessing
 # normalize between 0 and 1
-for m in range(M):
-    BETAS[m] = (BETAS[m] - np.min(BETAS[m])) / (np.max(BETAS[m]) - np.min(BETAS[m]))
+# for m in range(M):
+#     BETAS[m] = (BETAS[m] - np.min(BETAS[m])) / (np.max(BETAS[m]) - np.min(BETAS[m]))
+
+vmax = np.max(BETAS)
+vmin = np.min(BETAS)
 
 plt.figure()
 plt.suptitle('K = %d' % K)
