@@ -15,14 +15,14 @@ def DMF(I_th, I_cc, area=None, N=None, t_sim=1, dt=1e-4, sigma=0):
     M = 8
 
     # neuronal parameters
-    tau_m = 10e-3
-    tau_s = .5e-3
-    C_m   = 250e-6
-    R     = tau_m / C_m
+    tau_m = 10e-3           # membrane time constant
+    tau_s = .5e-3           # synaptic time constant
+    C_m   = 250e-6          # membrane capacitance
+    R     = tau_m / C_m     # membrane resistance
 
-    a = 48.
-    b = 981.
-    d = 8.9e-3
+    a = 48.                 # gain
+    b = 981.                # threshold
+    d = 8.9e-3              # noise impulse
 
     # connectivity parameters
     P = np.array( # connection probabilities
@@ -65,7 +65,7 @@ def DMF(I_th, I_cc, area=None, N=None, t_sim=1, dt=1e-4, sigma=0):
     def func(x, a=a, b=b, d=d):
         return (a*x - b) / (1 - np.exp(-d*(a*x - b)))
     
-    def sim(X, Y, I, I_th, I_cc, I_bg, G, func, tau_s, tau_m, R, dt, T, N, sigma=0):
+    def sim(X, Y, I, I_th, I_cc, I_bg, G, func, tau_s, tau_m, R, dt, T, sigma=0):
         for t in range(1, T):
             dsig = np.sqrt(dt / tau_s) * sigma
             # save currents (recurrent + external)
@@ -81,7 +81,7 @@ def DMF(I_th, I_cc, area=None, N=None, t_sim=1, dt=1e-4, sigma=0):
 
         return X, Y, I
     
-    X, Y, I = sim(X=X, Y=Y, I=I, I_th=I_th, I_cc=I_cc, I_bg=I_bg, G=G, func=func, tau_s=tau_s, tau_m=tau_m, R=R, dt=dt, T=T, N=N, sigma=sigma)
+    X, Y, I = sim(X=X, Y=Y, I=I, I_th=I_th, I_cc=I_cc, I_bg=I_bg, G=G, func=func, tau_s=tau_s, tau_m=tau_m, R=R, dt=dt, T=T, sigma=sigma)
 
     F = np.zeros((T, M), dtype=np.float32)
     for t in range(1, T):
