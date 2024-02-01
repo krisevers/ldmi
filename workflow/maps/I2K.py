@@ -2,6 +2,26 @@ import numpy as np
 import h5py
 import json
 
+def get_thickness(K, species='macaque', area='V1'):
+    with open('maps/thickness.json', 'r') as f:
+        THICK = json.load(f)
+
+    thickness = THICK[species][area]
+
+    # normalize thickness
+    norm_thickness = thickness / np.sum(thickness)
+    # assign part of K to each layer
+    K_per_layer = norm_thickness * K
+    K_per_layer = np.ceil(K_per_layer).astype(int)
+
+    # L1, L2/3, L4, L5, L6
+    layers = ['1', '23', '4', '5', '6']
+    layer_to_K = np.repeat(layers, K_per_layer)
+    layer_to_K = layer_to_K[:K]
+
+    return layer_to_K
+
+
 def I2K(K, species='macaque', area='V1', sigma=0):
 
     with open('maps/thickness.json', 'r') as f:
@@ -10,6 +30,7 @@ def I2K(K, species='macaque', area='V1', sigma=0):
     thickness = THICK[species][area]
 
     K_up = K * 3    # upsample K to get smooth probability
+    K_up = K
 
     # normalize thickness
     norm_thickness = thickness / np.sum(thickness)
