@@ -52,6 +52,17 @@ def DMF(I_th, I_cc, area=None, N=None, t_sim=1, dt=1e-4, sigma=0):
 
     G = np.tile([J_E, J_I], (M, int(M/2))) * C    # synaptic conductances
 
+    # import pylab as plt
+    # plt.figure(figsize=(6, 5))
+    # max = np.max(np.abs(G))
+    # plt.imshow(G, aspect='auto', cmap='RdBu', vmin=-max, vmax=max)
+    # plt.colorbar()
+    # plt.xlabel('Source')
+    # plt.ylabel('Target')
+    # plt.title('Synaptic strength (mV)')
+    # plt.savefig('pdf/synaptic_strength.pdf')
+    # plt.close('all')
+
     C_bg = np.array([1600, 1500, 2100, 1900, 2000, 1900, 2900, 2100])   # number of background synapses
     G_bg = C_bg * J_E
     nu_bg = 8.

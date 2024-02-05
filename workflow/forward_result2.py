@@ -66,7 +66,12 @@ for idp, p in enumerate(np.arange(0, M, 2)):
             if th[k] != layers[l]:
                 PROB_KK[k, 72:] = 0
             else:
-                PROB_KK[k, 72:] = 0.0
+                PROB_KK[k, 72:] = 0
+
+        # make PROB_KK[:, 72:] smooth along the first axis
+        for i in range(np.shape(PROB_KK[:, 72:])[1]):
+            PROB_KK[:, 72+i] = np.convolve(PROB_KK[:, 72+i], np.ones(5)/5, mode='same')
+
 
         MAP = np.zeros((I.shape[0], K))
         for i in range(I.shape[0]):
@@ -105,19 +110,29 @@ for idp, p in enumerate(np.arange(0, M, 2)):
 # for m in range(M):
 #     BETAS[m] = (BETAS[m] - np.min(BETAS[m])) / (np.max(BETAS[m]) - np.min(BETAS[m]))
 
-vmax = np.max(BETAS)
-vmin = np.min(BETAS)
 
 plt.figure(figsize=(2, 10))
-blues   = plt.cm.Blues(np.linspace(0, 1, L))
-reds    = plt.cm.Reds(np.linspace(0, 1, L))
-labels  = ['L23', 'L4', 'L5', 'L6']
+blues = plt.cm.Blues(np.linspace(0, 1, L))
+reds = plt.cm.Reds(np.linspace(0, 1, L))
+labels = ['L23', 'L4', 'L5', 'L6']
 for p in range(P):
-    plt.subplot(4, 1, p+1)
+    ax = plt.subplot(4, 1, p + 1)
     for l in range(L):
-            plt.plot(BETAS[p, l], np.arange(K), color=blues[l])
+        plt.plot(BETAS[p, l], np.arange(K), color=blues[l], lw=3)
+    vmax = BETAS[p].max()
+    vmin = BETAS[p].min()
+    plt.xlim([vmin, vmax+0.1])
+    plt.ylim([0, K-1])
     plt.gca().invert_yaxis()
-            
+
+    # Make bottom and left axis thicker
+    ax.spines['bottom'].set_linewidth(2)
+    ax.spines['left'].set_linewidth(2)
+
+    # Remove top and right axis
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
     plt.ylabel('Cortical Depth (K)')
     plt.title(labels[p])
 plt.tight_layout()
@@ -126,23 +141,31 @@ plt.show()
 
 # same plot but group depths together
 K_grouped = 5
-K_ratio   = int(K / K_grouped)
+K_ratio = int(K / K_grouped)
 BETAS_grouped = np.zeros((M, L, K_ratio))
 for p in range(P):
     for l in range(L):
         for k in range(K_ratio):
-            BETAS_grouped[p, l, k] = BETAS[p, l, k*K_grouped:(k+1)*K_grouped].max()
+            BETAS_grouped[p, l, k] = BETAS[p, l, k * K_grouped:(k + 1) * K_grouped].max()
 
 plt.figure(figsize=(2, 10))
-blues   = plt.cm.Blues(np.linspace(0, 1, L))
-reds    = plt.cm.Reds(np.linspace(0, 1, L))
-labels  = ['L23', 'L4', 'L5', 'L6']
+blues = plt.cm.Blues(np.linspace(0, 1, L))
+reds = plt.cm.Reds(np.linspace(0, 1, L))
+labels = ['L23', 'L4', 'L5', 'L6']
 for p in range(P):
-    plt.subplot(4, 1, p+1)
+    ax = plt.subplot(4, 1, p + 1)
     for l in range(L):
         plt.plot(BETAS_grouped[p, l], np.arange(K_ratio), color=blues[l])
     plt.gca().invert_yaxis()
-            
+
+    # Make bottom and left axis thicker
+    ax.spines['bottom'].set_linewidth(2)
+    ax.spines['left'].set_linewidth(2)
+
+    # Remove top and right axis
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
     plt.ylabel('Cortical Depth (K)')
     plt.title(labels[p])
 plt.tight_layout()
@@ -150,16 +173,35 @@ plt.savefig('pdf/cc_input_player_grouped.pdf', dpi=300)
 plt.show()
 
 plt.figure(figsize=(5, 5))
-spectral   = plt.cm.Spectral(np.linspace(0, 1, P))
+spectral = plt.cm.Spectral(np.linspace(0, 1, P))
 labels = ['L23', 'L4', 'L5', 'L6']
 for p in range(P):
-    plt.plot((BETAS_grouped[p, 0]-BETAS_grouped[p, 0].mean())/BETAS_grouped[p, 0].max(), np.arange(K_ratio), color=spectral[p], label=labels[p])
+    plt.plot((BETAS_grouped[p, 0] - BETAS_grouped[p, 0].mean()) / BETAS_grouped[p, 0].max(), np.arange(K_ratio),
+             color=spectral[p], label=labels[p])
 plt.gca().invert_yaxis()
+
+# Make bottom and left axis thicker
+plt.gca().spines['bottom'].set_linewidth(2)
+plt.gca().spines['left'].set_linewidth(2)
+
+# Remove top and right axis
+plt.gca().spines['top'].set_visible(False)
+plt.gca().spines['right'].set_visible(False)
+
 plt.ylabel('Cortical Depth (K)')
 plt.title('Layer Profile to Layer Specific External Input')
 plt.legend()
 plt.tight_layout()
 plt.savefig('pdf/cc_input_player_grouped_all.pdf', dpi=300)
+plt.show()
+
+plt.figure(figsize=(5, 5))
+plt.imshow(PROB_K[:, 72:], aspect='auto', cmap='Reds')
+plt.ylabel('Cortical Depth (K)')
+plt.xlabel('Target Population')
+plt.xticks(np.arange(0, 8), ['L23E', 'L23I', 'L4E', 'L4I', 'L5E', 'L5I', 'L6E', 'L6I'], rotation=45)
+plt.tight_layout()
+plt.savefig('pdf/cc_input_prob_k.pdf', dpi=300)
 plt.show()
 
 import IPython; IPython.embed()
