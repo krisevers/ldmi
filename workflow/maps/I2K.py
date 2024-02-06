@@ -96,14 +96,6 @@ def I2K(K, species='macaque', area='V1', sigma=0):
             else:
                 PROB_KK[:, t, s] = NUMSYN_KK[:, t, s] / np.sum(NUMSYN_KK[:, t, s])
 
-    # probabilities for each source-target pair should sum to 1
-    for t, target in enumerate(model_targets):
-        for s, source in enumerate(model_sources):
-            if np.sum(PROB_KK[:, t, s]) == 0:
-                PROB_KK[:, t, s] = np.zeros(K_up)
-            else:
-                PROB_KK[:, t, s] /= np.sum(PROB_KK[:, t, s])
-
     # smooth along cortical depth (K) with Gaussian kernel
     if sigma != 0:
         from scipy.ndimage import gaussian_filter1d
@@ -124,8 +116,30 @@ def I2K(K, species='macaque', area='V1', sigma=0):
         for s in range(len(model_sources)):
             PROB_K[:, t, s] = np.mean(PROB_KK.reshape((K, K_up//K, len(model_targets), len(model_sources))), axis=1)[:, t, s]
 
+    # probabilities for each source-target pair should sum to 1
+    for t, target in enumerate(model_targets):
+        for s, source in enumerate(model_sources):
+            if np.sum(PROB_K[:, t, s]) == 0:
+                PROB_K[:, t, s] = np.zeros(K)
+            else:
+                PROB_K[:, t, s] /= np.sum(PROB_K[:, t, s])
+
+    with open('maps/popsize.json', 'r') as f:
+        POPSIZE = json.load(f)
+
+    # get population sizes
+    popsize = POPSIZE[area]
+
+    tot_popsize = np.sum(popsize)
+    rel_popsize = popsize / tot_popsize
+
+    rel_thickness = thickness / np.sum(thickness)
+
+    # for i in range(len(model_targets)):
+    #     PROB_K[:, i, :]
+
     return PROB_K
-        
+
 
 if __name__=="__main__":
 
@@ -168,7 +182,30 @@ if __name__=="__main__":
         cax = divider.append_axes("right", size="5%", pad=0.05)
         plt.colorbar(im, cax=cax)
     plt.tight_layout()
+    plt.savefig('pdf/I2K.pdf', dpi=300)
     plt.show()
+
+    plt.figure(figsize=(3, 7))
+    plt.subplot(4, 1, 1)
+    plt.plot(np.sum(PROB_K[:, 0], axis=1), np.arange(K), color='b', label='L23E', lw=3)
+    plt.plot(np.sum(PROB_K[:, 1], axis=1), np.arange(K), color='r', label='L23I', lw=3)
+    plt.gca().invert_yaxis()
+    plt.subplot(4, 1, 2)
+    plt.plot(np.sum(PROB_K[:, 2], axis=1), np.arange(K), color='b', label='L4E', lw=3)
+    plt.plot(np.sum(PROB_K[:, 3], axis=1), np.arange(K), color='r', label='L4I', lw=3)
+    plt.gca().invert_yaxis()
+    plt.subplot(4, 1, 3)
+    plt.plot(np.sum(PROB_K[:, 4], axis=1), np.arange(K), color='b', label='L5E', lw=3)
+    plt.plot(np.sum(PROB_K[:, 5], axis=1), np.arange(K), color='r', label='L5I', lw=3)
+    plt.gca().invert_yaxis()
+    plt.subplot(4, 1, 4)
+    plt.plot(np.sum(PROB_K[:, 6], axis=1), np.arange(K), color='b', label='L6E', lw=3)
+    plt.plot(np.sum(PROB_K[:, 7], axis=1), np.arange(K), color='r', label='L6I', lw=3)
+    plt.gca().invert_yaxis()
+    plt.tight_layout()
+    plt.savefig('pdf/I2K_sum.pdf', dpi=300)
+    plt.show()
+
 
 
     # save to file

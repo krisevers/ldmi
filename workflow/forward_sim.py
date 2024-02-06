@@ -19,7 +19,7 @@ Generate dataset of neuronal response to external input in the microcircuit mode
 """
 
 dt = 1e-4
-t_sim = 30
+t_sim = 50
 T = int(t_sim / dt)
 M = 8
 
@@ -29,7 +29,7 @@ I_th    = np.array([0,              0,                 0.0983*902*15*J_E, 0.0619
 I_cc    = np.array([0.1*1200*5*J_E, 0.085*1200*5*J_E,  0,                 0,                 0.1*1200*5*J_E, 0.085*1200*5*J_E, 0,                 0                ])
 
 I_th_T = np.zeros((T, M))
-I_th_T[int(5/dt):int(10/dt), :] = I_th
+I_th_T[int(5/dt):int(30/dt), :] = I_th
 
 I_cc_T = np.zeros((T, M))
 # I_cc_T[int(0.6/dt):int(0.9/dt), :] = I_cc
@@ -42,7 +42,7 @@ K       = 31
 
 from maps.I2K import I2K
 
-PROB_K = I2K(K, species, area, sigma=1)
+PROB_K = I2K(K, species, area, sigma=K/10)
 
 # flatten probabilities along last two dimensions
 PROB_K = np.array([np.concatenate((np.ravel(PROB_K[k, :, :8]), PROB_K[k, :, 8], PROB_K[k, :, 9])) for k in range(K)])
@@ -50,6 +50,7 @@ PROB_K = np.array([np.concatenate((np.ravel(PROB_K[k, :, :8]), PROB_K[k, :, 8], 
 print('Selecting excitatory synapses...')
 E_map = np.zeros((K, 80))
 E_map[:, ::2] = 1
+E_map[:, 1::2] = 1  # inhibitory contribution
 E_map[:, 64:] = 1
 
 print('Computing laminar projection of currents to synapses...')
@@ -68,7 +69,14 @@ dt = 1e-4
 lbr_dt = 0.001
 lbr = LBR(K)
 
-F = NVC(MAP[3000:] - CURRENT_BASE)
+I_tot = MAP[3000:] - CURRENT_BASE
+
+I_tot *= 1e3
+
+# normalize between 0 and 0.6
+# I_tot = (I_tot - np.min(I_tot)) / (np.max(I_tot) - np.min(I_tot)) * 0.8
+
+F = NVC(I_tot)
 F = F[::int(lbr_dt/dt)]     # resample to match LBR timesteps
 
 B, _, _ = lbr.sim(F, K, integrator='numba')
@@ -99,9 +107,36 @@ for i in range(5):
 
 plt.figure()
 plt.plot(BETA_downsampled)
+
+
+# post-synaptic current per population
+populations = ['L23E', 'L23I', 'L4E', 'L4I', 'L5E', 'L5I', 'L6E', 'L6I']
+colors = plt.cm.Spectral(np.linspace(0, 1, M))
+tot_current = np.zeros(M)
+for i in range(M):
+    tot_current[i] = abs(np.sum(I[3000:, i*8:(i+1)*8]))
+
+plt.figure(figsize=(5, 5))
+plt.bar(populations, tot_current, color=colors)
+plt.savefig('pdf/th_totcurrent.pdf')
+
+# forward mapping of current to depth
+plt.figure(figsize=(5, 5))
+plt.plot(I_tot[int(7.5/dt)], np.arange(K))
+plt.gca().invert_yaxis()
+plt.savefig('pdf/th_I.pdf')
 plt.show()
 
-import IPython; IPython.embed()
+plt.figure(figsize=(5, 5))
+plt.plot(F[10000], np.arange(K))
+plt.gca().invert_yaxis()
+plt.savefig('pdf/th_F.pdf')
+
+plt.figure(figsize=(5, 5))
+plt.plot(BETA, np.arange(K))
+plt.gca().invert_yaxis()
+plt.savefig('pdf/th_BETA.pdf')
+
 
 plt.figure()
 colors = plt.cm.Spectral(np.linspace(0, 1, M))
@@ -111,4 +146,4 @@ for i in range(M):
 plt.legend()
 plt.show()
 
-
+import IPython; IPython.embed()
