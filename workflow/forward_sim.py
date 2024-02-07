@@ -42,16 +42,16 @@ K       = 31
 
 from maps.I2K import I2K
 
-PROB_K = I2K(K, species, area, sigma=K/10)
+PROB_K = I2K(K, species, area, sigma=K/15)
 
 # flatten probabilities along last two dimensions
 PROB_K = np.array([np.concatenate((np.ravel(PROB_K[k, :, :8]), PROB_K[k, :, 8], PROB_K[k, :, 9])) for k in range(K)])
 
 print('Selecting excitatory synapses...')
 E_map = np.zeros((K, 80))
-E_map[:, ::2] = 1
-E_map[:, 1::2] = 1  # inhibitory contribution
-E_map[:, 64:] = 1
+E_map[:, ::2]  = 1
+E_map[:, 1::2] = 0  # inhibitory contribution
+E_map[:, 64:]  = 1
 
 print('Computing laminar projection of currents to synapses...')
 MAP = np.zeros((I.shape[0], K))
@@ -73,13 +73,19 @@ I_tot = MAP[3000:] - CURRENT_BASE
 
 I_tot *= 1e3
 
+# running mean
+I_tot = np.array([np.mean(I_tot[i:i+100], axis=0) for i in range(len(I_tot) - 100)])
+I_tot -= I_tot[0]
+# add lost timesteps at end
+I_tot = np.concatenate((I_tot, np.zeros((100, K))))
+
 # normalize between 0 and 0.6
-# I_tot = (I_tot - np.min(I_tot)) / (np.max(I_tot) - np.min(I_tot)) * 0.8
+I_tot = (I_tot - np.min(I_tot)) / (np.max(I_tot) - np.min(I_tot)) * 0.8
 
 F = NVC(I_tot)
 F = F[::int(lbr_dt/dt)]     # resample to match LBR timesteps
 
-B, _, _ = lbr.sim(F, K, integrator='numba')
+B, _, Y = lbr.sim(F, K, integrator='numba')
 # compute betas 
 
 def HRF(t, peak_time=6, undershoot_time=10, peak_dispersion=1, undershoot_dispersion=1):
@@ -125,7 +131,6 @@ plt.figure(figsize=(5, 5))
 plt.plot(I_tot[int(7.5/dt)], np.arange(K))
 plt.gca().invert_yaxis()
 plt.savefig('pdf/th_I.pdf')
-plt.show()
 
 plt.figure(figsize=(5, 5))
 plt.plot(F[10000], np.arange(K))
@@ -144,6 +149,47 @@ populations = ['L23E', 'L23I', 'L4E', 'L4I', 'L5E', 'L5I', 'L6E', 'L6I']
 for i in range(M):
     plt.plot(B[:, i], color=colors[i], label=populations[i])
 plt.legend()
+plt.show()
+
+
+fig = plt.figure(figsize=(13, 3))
+plt.subplot(1, 4, 1)
+plt.title('Transmembrane Current')
+plt.imshow(I_tot.T, aspect='auto', cmap='Greens', interpolation='none')
+plt.colorbar()
+plt.xticks([int(5/dt)-3000, int(25/dt)-3000, int(45/dt)-3000], [5, 25, 45])
+plt.xlabel('Time (s)')
+plt.yticks([0, 30], ['CSF', 'WM'])
+plt.ylabel('Cortical Depth')
+
+plt.subplot(1, 4, 2)
+plt.title('Cerebral Blood Flow')
+plt.imshow(F.T, aspect='auto', cmap='Blues', interpolation='none')
+plt.colorbar()
+plt.xticks([int(5/lbr_dt)-300, int(25/lbr_dt)-300, int(45/lbr_dt)-300], [5, 25, 45])
+plt.xlabel('Time (s)')
+plt.yticks([0, 30], ['CSF', 'WM'])
+
+plt.subplot(1, 4, 3)
+plt.title('Cerebral Blood Volume')
+plt.imshow(Y['vv'].T, aspect='auto', cmap='Purples', interpolation='none')
+plt.colorbar()
+plt.xticks([int(5/lbr_dt)-300, int(25/lbr_dt)-300, int(45/lbr_dt)-300], [5, 25, 45])
+plt.xlabel('Time (s)')
+plt.yticks([0, 30], ['CSF', 'WM'])
+
+plt.subplot(1, 4, 4)
+plt.title('BOLD Signal')
+plt.imshow(B.T, aspect='auto', cmap='Reds', interpolation='none')
+plt.colorbar()
+plt.xticks([int(5/lbr_dt)-300, int(25/lbr_dt)-300, int(45/lbr_dt)-300], [5, 25, 45])
+plt.xlabel('Time (s)')
+plt.yticks([0, 30], ['CSF', 'WM'])
+
+plt.tight_layout()
+fig.savefig('eps/th_input.eps', dpi=300)
+fig.savefig('png/th_input.png', dpi=300)
+
 plt.show()
 
 import IPython; IPython.embed()

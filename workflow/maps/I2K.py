@@ -135,8 +135,8 @@ def I2K(K, species='macaque', area='V1', sigma=0):
 
     rel_thickness = thickness / np.sum(thickness)
 
-    # for i in range(len(model_targets)):
-    #     PROB_K[:, i, :]
+    for i in range(len(model_targets)):
+        PROB_K[:, i, :] *= 0.25 #rel_popsize[i]
 
     return PROB_K
 
