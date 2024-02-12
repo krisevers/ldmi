@@ -53,7 +53,9 @@ E_map[:, ::2]  = 1
 E_map[:, 1::2] = 0  # inhibitory contribution
 E_map[:, 64:]  = 1
 
-PSI -= BASELINE
+I_base = np.load('data/dmf/I_base.npy')
+
+PSI -= I_base
 
 print('Computing laminar projection of currents to synapses...')
 MAP = np.zeros((PSI.shape[0], K))

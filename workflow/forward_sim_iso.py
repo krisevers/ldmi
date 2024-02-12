@@ -158,7 +158,7 @@ for c in range(num_conditions):
             cbar.ax.tick_params(width=2)
 
 plt.tight_layout()
-plt.savefig('eps/iso.eps', format='eps', dpi=300)
+# plt.savefig('eps/iso.eps', format='eps', dpi=300)
 plt.savefig('pdf/iso.pdf', format='pdf', dpi=300)
 plt.savefig('png/iso.png', format='png', dpi=300)
 plt.show()
