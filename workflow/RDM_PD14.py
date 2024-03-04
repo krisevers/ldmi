@@ -50,19 +50,19 @@ params = {
     "M": M,
     "N": N,
     "mu": I_bg,
-    "Delta_u":  np.ones(M) *  5.0,
-    "c":        np.ones(M) * 10.0,
+    "Delta_u":  np.ones(M) *  5.0,  # 5.0
+    "c":        np.ones(M) * 10.0,  # 10.0
     "vreset":   np.ones(M) *  0.0,
     "vth":      np.ones(M) * 15.0,
     "tref":     np.ones(M) *  0.002,
-    "delay":    np.ones(M) *  0.001,
+    "delay":    np.ones(M) *  0.001, # 0.001
     "tau_m":    np.ones(M) * tau_m,
     "tau_s":    np.tile([tau_s_E, tau_s_I], int(M/2)),
     "weights":  G,
 }
 
 # run simulation
-Abar, A = RDM(T, dt_RDM, dt_rec, params, I_ext, Nrecord, seed)
+Syn, Vol, Abar, A = RDM(T, dt_RDM, dt_rec, params, I_ext, Nrecord, seed)
 
 from models.DMF import DMF
 
@@ -73,7 +73,7 @@ for i in range(M):
 
 I_cc = np.zeros_like(I_th)
 
-X, Y, I, F = DMF(I_th=I_th, I_cc=I_cc, area='V1', N=N, t_sim=T, dt=dt_DMF, sigma=0.1)
+X, Y, I, F = DMF(I_th=I_th, I_cc=I_cc, area='V1', N=N, t_sim=T, dt=dt_DMF, sigma=0.02)
 
 # plot results
 import pylab as plt
@@ -110,12 +110,31 @@ plt.xticks(np.arange(M), populations)
 plt.xlabel('Population')
 plt.ylabel('Mean firing rate (Hz)')
 plt.tight_layout()
-plt.show()
+# plt.show()
 
-# subsample F from dt_RDM to dt_DMF
+# subsample from dt_RDM to dt_DMF
+X = X[::int(dt_RDM/dt_DMF),:]
+Y = Y[::int(dt_RDM/dt_DMF),:]
 F = F[::int(dt_RDM/dt_DMF),:]
 
 plt.figure(figsize=(8,4))
+plt.title('Synaptic activity')
+for i in range(M):
+    plt.subplot(4, 2, i+1)
+    plt.plot(Syn[i,int(0.1/dt_RDM):], color='k', label=populations[i], alpha=0.3)
+    plt.plot(X[int(0.1/dt_RDM):,i], color='r', label=populations[i])
+plt.tight_layout()
+
+plt.figure(figsize=(8,4))
+plt.title('Membrane potential')
+for i in range(M):
+    plt.subplot(4, 2, i+1)
+    plt.plot(Vol[i,int(0.1/dt_RDM):], color='k', label=populations[i], alpha=0.3)
+    plt.plot(Y[int(0.1/dt_RDM):,i], color='r', label=populations[i])
+plt.tight_layout()
+
+plt.figure(figsize=(8,4))
+plt.title('Population Activity')
 for i in range(M):
     plt.subplot(4, 2, i+1)
     plt.plot(A[i,int(0.1/dt_RDM):], color='k', label=populations[i], alpha=0.3)
@@ -124,17 +143,6 @@ for i in range(M):
 plt.tight_layout()
 plt.show()
 
-# powerspectra
-from scipy.signal import welch
 
-# plt.figure(figsize=(8,4))
-# for i in range(M):
-#     plt.subplot(4, 2, i+1)
-#     f, Pxx = welch(Abar[i,int(0.1/dt_RDM):], fs=1/dt_RDM, nperseg=1024)
-#     plt.plot(f, np.log(Pxx), color='k', label=populations[i])
-#     f, Pxx = welch(F[int(0.1/dt_RDM):,i], fs=1/dt_RDM, nperseg=1024)
-#     plt.plot(f, np.log(Pxx), color='r', label=populations[i])
-# plt.tight_layout()
-# plt.show()
 
 import IPython; IPython.embed()

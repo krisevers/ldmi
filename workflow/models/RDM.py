@@ -59,6 +59,8 @@ def RDM(T, dt, dt_rec, params, I_ext, Nrecord, seed):
     Nbin = int(dt_rec/dt)
     Abar = np.zeros((Nrecord, Nsteps_rec))
     A = np.zeros((Nrecord, Nsteps_rec))
+    Syn = np.zeros((M, Nsteps))
+    Vol = np.zeros((M, Nsteps))
 
     # initialization
     L = np.zeros(M, dtype=int)
@@ -87,6 +89,10 @@ def RDM(T, dt, dt_rec, params, I_ext, Nrecord, seed):
         synInput = np.dot(weights, y) + I[:, ti]
 
         h += dtau*(mu-h) + synInput * dt
+
+        # save the synaptic input and the membrane potential
+        Syn[:, ti] = synInput * dt
+        Vol[:, ti] = h
         
         Plam, lambdafree = Pfire(h, c, Delta_u, vth, lambdafree, dt)
 
@@ -121,7 +127,7 @@ def RDM(T, dt, dt_rec, params, I_ext, Nrecord, seed):
             else:
                 PLAM = 0
 
-            nmean = max(0, W +PLAM * (1 - X))
+            nmean = max(0, W + PLAM * (1 - X))
             if nmean>1:
                 nmean = 1
 
@@ -137,7 +143,7 @@ def RDM(T, dt, dt_rec, params, I_ext, Nrecord, seed):
     Abar /= (Nbin * dt)
     A  /= (Nbin * dt)
 
-    return Abar, A
+    return Syn, Vol, Abar, A
 
 
 if __name__ == '__main__':
@@ -168,7 +174,7 @@ if __name__ == '__main__':
     Nrecord = 2
     seed = 0
     
-    Abar, A = RDM(T, dt, dt_rec, params, I_ext, Nrecord, seed)
+    Syn, Vol, Abar, A = RDM(T, dt, dt_rec, params, I_ext, Nrecord, seed)
 
     plt.figure()
     plt.plot(Abar[0,:], 'b', label='Excitatory')
